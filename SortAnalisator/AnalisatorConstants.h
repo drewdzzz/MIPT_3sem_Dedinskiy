@@ -3,6 +3,9 @@
 
 namespace AnConst{
 
+	const int MAX_COPY_QUANTITY = 65000;
+	const int MAX_COMP_QUANTITY = 1000000000;
+
 	const char* QUICK_SORT_BUTTON_TEXTURE = "./textures/buttons/quicksort.jpg";
 
 	const int BUTTON_WIDTH = 100;
@@ -11,10 +14,10 @@ namespace AnConst{
 
 	const int SORT_QUANTITY = 3;
 
-	const int MEASURE_FREQ = 5;
-	const int MEASURE_NUM  = 5;
+	const int MEASURE_FREQ = 10;
+	const int MEASURE_NUM  = 50;
 
-	const double LEFT_OCTANGLE[8] = {
+	const double LEFT_COPY_OCTANGLE[8] = {
 	-0.95, 0.95,
 	-0.05, 0.95,
 	-0.05, -0.25,
@@ -35,7 +38,7 @@ namespace AnConst{
 		-0.124, -0.184
 	};
 
-	const double RIGHT_OCTANGLE[8] = {
+	const double RIGHT_COMP_OCTANGLE[8] = {
 		0.05, 0.95,
 		0.95, 0.95,
 		0.95, -0.25,

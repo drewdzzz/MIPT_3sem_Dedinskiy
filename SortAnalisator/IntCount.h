@@ -1,6 +1,15 @@
 #ifndef STRUCT_INCLUDE
 #define STRUCT_INCLUDE
 
+struct Point{
+	double x;
+	double y;
+
+	Point() = default;
+	Point(double x, double y): x(x), y(y) {
+	}	
+};
+
 struct Results {
 	unsigned int copies;
 	unsigned int comps;
