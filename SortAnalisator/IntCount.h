@@ -5,48 +5,63 @@ struct Results {
 	unsigned int copies;
 	unsigned int comps;
 
+	Results() = default;
+
 	Results(int copies, int comps) : copies(copies), comps(comps) {
 
 	}
+	Results& operator=(const Results& other) {
+		copies = other.copies;
+		comps = other.comps;
+	}
 };
 
-class IntCopyCompCount {
+class IntCount {
 	static unsigned int CopyCounter;
 	static unsigned int CompCounter;
 public:
+	int value;
 
 	static Results getCounters() {
 		return Results(CopyCounter, CompCounter);
 	}
 
-	int value;
 	static void NullCounters() {
 		CopyCounter = 0;
 		CompCounter = 0;
 	}
 
-	IntCopyCompCount() : value(0) {
+	IntCount() : value(0) {
 	}
 
-	IntCopyCompCount(const IntCopyCompCount& other): value(other.value) {
+	IntCount(const IntCount& other): value(other.value) {
 		++CopyCounter;
 	}
 
-	IntCopyCompCount& operator=(const IntCopyCompCount& other) {
+	IntCount& operator=(const IntCount& other) {
 		value = other.value;
 	}
 
-	bool operator<(const IntCopyCompCount& other) {
+	IntCount& operator=(int value) {
+		this->value = value;
+	}
+
+	bool operator<(const IntCount& other) {
 		++CompCounter;
 		return value < other.value;
 	}
 
+	bool operator<=(const IntCount& other) {
+		++CompCounter;
+		return value <= other.value;
+	}
+
 };
 
-unsigned int IntCopyCompCount::CopyCounter = 0;
-unsigned int IntCopyCompCount::CompCounter = 0;
+unsigned int IntCount::CopyCounter = 0;
+unsigned int IntCount::CompCounter = 0;
 
 struct MyIntLess {
-	bool operator()(IntCopyCompCount* a, IntCopyCompCount* b) { return *a < *b; }
+	bool operator()(IntCount* a, IntCount* b) { return *a < *b; }
 };
 #endif

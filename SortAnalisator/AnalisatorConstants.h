@@ -3,6 +3,12 @@
 
 namespace AnConst{
 
+	const char* QUICK_SORT_BUTTON_TEXTURE = "./textures/buttons/quicksort.jpg";
+
+	const int BUTTON_WIDTH = 100;
+	const int BUTTON_HEIGHT = 50;
+
+
 	const int SORT_QUANTITY = 3;
 
 	const int MEASURE_FREQ = 5;

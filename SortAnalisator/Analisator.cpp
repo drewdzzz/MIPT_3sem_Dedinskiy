@@ -1,22 +1,32 @@
 #include<cstdlib>
+#include<iostream>
 #include<GLFW/glfw3.h>
-//#include"Sort.hpp"
+#include<SOIL/SOIL.h>
+#include"Sort.hpp"
 #include"IntCount.h"
 #include"AnalisatorConstants.h"
 
+Results BUBBLESORT_RESULTS[AnConst::MEASURE_NUM];
+Results  QUICKSORT_RESULTS[AnConst::MEASURE_NUM];
 
-void BubbleSort(IntCopyCompCount* begin, IntCopyCompCount* end, MyIntLess cmp) {
-	for (IntCopyCompCount* curr1 = begin; curr1 != end; ++curr1)
-		for (IntCopyCompCount* curr2 = curr1; curr2 != end; ++curr2) 
-			if (cmp(curr2, curr2 + 1)) {
-				IntCopyCompCount temp = *curr2;
-				*curr2 = *(curr2 + 1);
-				*(curr2 + 1) = temp;
-			}
+
+void sort_test(void (*sort_func)(IntCount*, IntCount*), Results* result_array) {
+	for (int size = AnConst::MEASURE_FREQ, i = 0; i <= AnConst::MEASURE_NUM; size += AnConst::MEASURE_FREQ, ++i) {
+		IntCount* arr = new IntCount[size];
+		for (int i = 0; i < size; ++i)
+			arr[i] = rand() % 10000;
+		IntCount::NullCounters();
+		
+		sort_func(arr, arr + size);
+		
+		
+		result_array[i] = IntCount::getCounters();
+		delete[] arr;
+	}
+
 }
 
-
-Results makeTest(size_t n, void (*ptrSort)(IntCopyCompCount*, IntCopyCompCount*, MyIntLess)) {
+/*Results makeTest(size_t n, void (*ptrSort)(IntCopyCompCount*, IntCopyCompCount*, MyIntLess)) {
 	IntCopyCompCount* arr = new IntCopyCompCount[n];
 	for (int i = 0; i < n; ++i)
 		arr[i].value = rand();
@@ -24,7 +34,7 @@ Results makeTest(size_t n, void (*ptrSort)(IntCopyCompCount*, IntCopyCompCount*,
 	ptrSort(arr, arr + n, MyIntLess());
 	delete[] arr;
 	return IntCopyCompCount::getCounters();
-}
+}*/
 
 
 void draw_octangle(const double points[8], double red, double green, double blue) {
@@ -78,19 +88,6 @@ int main()
 	GLFWwindow* window = createContextWindow();
 	if (!window)
 		return -1;
-
-
-
-//ГЕНЕРИМ ТЕКСТУРКУ-------------------------------------------------------------
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-	GLuint button_texture[AnConst::SORT_QUANTITY];
-	GLuint* button_texture_ptr = button_texture;
-
-	glGenTextures(AnConst::SORT_QUANTITY, button_texture);
-//------------------------------------------------------------------------------
-
 
 
 	while (!glfwWindowShouldClose(window))
