@@ -2,6 +2,13 @@
 #define SORT_INCLUDE
 
 template<class T>
+void mySwap(T& a, T& b) {
+    T temp = a;
+    a = b;
+    b = temp;
+}
+
+template<class T>
 void BubbleSort(T* begin, T* end) {
 	for (T* curr1 = begin; curr1 != end; ++curr1)
 		for (T* curr2 = curr1; curr2 != end; ++curr2) 
@@ -25,12 +32,12 @@ T* partition(T* begin, T* end) {
     while (it < end) {
         if(*it <= *end) {
             ++move_place;
-            std::swap(*move_place, *it);
+            mySwap(*move_place, *it);
         }
         ++it;
     }
 
-    std::swap(*(move_place + 1), *end); 
+    mySwap(*(move_place + 1), *end); 
 
     return ++move_place;
 }
