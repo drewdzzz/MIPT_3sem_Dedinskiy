@@ -1,8 +1,38 @@
 #ifndef DRAW_TOOLS_INCLUDE
 #define DRAW_TOOLS_INCLUDE
 
+struct Point{
+	double x;
+	double y;
 
-void draw_graphic(Results measurements[AnConst::MEASURE_NUM], double red, double green, double blue){
+	Point() = default;
+	Point(double x, double y): x(x), y(y) {
+	}	
+
+	void set() const {
+		glVertex2d(x, y);
+	}
+};
+
+struct Color {
+	double red;
+	double green;
+	double blue;
+
+	Color() = default;
+	Color(double red, double green, double blue): red(red), green(green), blue(blue) {}
+	Color (const Color& other) = default;
+
+	void set() const {
+		glColor3d(red, green, blue);
+	}
+
+	void set_as_bg() const {
+		glClearColor(red, green, blue, 0);
+	}
+};
+
+void draw_graphic(Results measurements[AnConst::MEASURE_NUM], Color color){
 
 	if (measurements[0].comps == 0)
 		return;
@@ -16,7 +46,7 @@ void draw_graphic(Results measurements[AnConst::MEASURE_NUM], double red, double
 
 	Point current;
 
-	glColor3d(red, green, blue);
+	color.set();
 
 	glBegin(GL_LINE_STRIP);
 
@@ -44,8 +74,8 @@ void draw_graphic(Results measurements[AnConst::MEASURE_NUM], double red, double
 	glFlush();
 }
 
-void draw_octangle(const double points[8], double red, double green, double blue) {
-	glColor3d(red, green, blue);
+void draw_octangle(const double points[8], Color color) {
+	color.set();
 
 	glBegin(GL_QUADS);
 	for (int i = 0; i < 8; i += 2)
@@ -54,8 +84,8 @@ void draw_octangle(const double points[8], double red, double green, double blue
 	glFlush();
 }
 
-void draw_arrow(const double points[8], double red, double green, double blue) {
-	glColor3d(red, green, blue);
+void draw_arrow(const double points[8], Color color) {
+	color.set();
 
 	glBegin(GL_LINES);
 	for (int i = 0; i < 4; i += 2)
@@ -70,5 +100,12 @@ void draw_arrow(const double points[8], double red, double green, double blue) {
 	glFlush();
 }
 
+namespace colors{
+	const Color BLACK(0.0, 0.0, 0.0);
+	const Color WHITE(1.0, 1.0, 1.0);
+	const Color QUICKSORT(1.0, 0.0, 0.0);
+	const Color BUBBLESORT(0.0, 1.0, 0.0);
+	const Color BACKGROUND(0.04, 0.255, 0.29);
+}
 
 #endif

@@ -3,6 +3,15 @@
 
 namespace AnConst{
 
+	const char QUICKSORT_BUTTON_TEXT[]  = "PRESS Q TO TEST QUICKSORT";
+	const char BUBBLESORT_BUTTON_TEXT[] = "PRESS B TO TEST BUBBLESORT";
+	const char F_BUTTON_TEXT[]          = "PRESS F TO PAY RESPECT";
+	const char COPY_NUM[]               = "Copies";
+	const char COMP_NUM[]               = "Comporations";
+	const char EXIT_DECLARATION[]       = "PRESS ESC TO EXIT";
+
+	const char ARRAY_SIZE[] = "Array size";
+
 	const int MAX_COPY_QUANTITY = 65000;
 	const int MAX_COMP_QUANTITY = 1000000000;
 

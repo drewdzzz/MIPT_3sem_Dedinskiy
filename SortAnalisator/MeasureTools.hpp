@@ -21,18 +21,4 @@ void sort_test(void (*sort_func)(IntCount*, IntCount*), Results* result_array) {
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif
