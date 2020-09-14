@@ -16,6 +16,11 @@ struct Results {
 	}
 };
 
+class IntCount;
+
+void mySwap(IntCount& a, IntCount& b);
+struct MyIntLess;
+
 class IntCount {
 	static unsigned int CopyCounter;
 	static unsigned int CompCounter;
@@ -34,9 +39,7 @@ public:
 	IntCount() : value(0) {
 	}
 
-	IntCount(const IntCount& other): value(other.value) {
-		++CopyCounter;
-	}
+	IntCount(const IntCount& other): value(other.value) {}
 
 	IntCount& operator=(const IntCount& other) {
 		value = other.value;
@@ -47,22 +50,28 @@ public:
 	}
 
 	bool operator<(const IntCount& other) {
-		++CompCounter;
 		return value < other.value;
 	}
 
-	bool operator<=(const IntCount& other) {
-		++CompCounter;
-		return value <= other.value;
-	}
+	friend void mySwap(IntCount* a, IntCount* b);
+	friend MyIntLess;
+};
 
+void mySwap(IntCount* a, IntCount* b) {
+    IntCount temp = *a;
+    *a = *b;
+    *b = temp;
+	++IntCount::CopyCounter;
+}
+
+struct MyIntLess {
+	bool operator()(IntCount* a, IntCount* b) { 
+		++IntCount::CompCounter;
+		return *a < *b; 
+	}
 };
 
 unsigned int IntCount::CopyCounter = 0;
 unsigned int IntCount::CompCounter = 0;
-
-struct MyIntLess {
-	bool operator()(IntCount* a, IntCount* b) { return *a < *b; }
-};
 
 #endif

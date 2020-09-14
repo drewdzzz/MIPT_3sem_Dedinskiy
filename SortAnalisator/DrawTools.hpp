@@ -1,19 +1,6 @@
 #ifndef DRAW_TOOLS_INCLUDE
 #define DRAW_TOOLS_INCLUDE
 
-struct Point{
-	double x;
-	double y;
-
-	Point() = default;
-	Point(double x, double y): x(x), y(y) {
-	}	
-
-	void set() const {
-		glVertex2d(x, y);
-	}
-};
-
 struct Color {
 	double red;
 	double green;
@@ -37,11 +24,11 @@ void draw_graphic(Results measurements[AnConst::MEASURE_NUM], Color color){
 	if (measurements[0].comps == 0)
 		return;
 
-	Point copy_start_point(AnConst::LEFT_VERTICAL_ARROW[0], AnConst::LEFT_VERTICAL_ARROW[1]);
-	Point comp_start_point(AnConst::RIGHT_VERTICAL_ARROW[0], AnConst::RIGHT_VERTICAL_ARROW[1]);
+	Point copy_start_point(AnConst::LEFT_VERTICAL_ARROW[0].x, AnConst::LEFT_VERTICAL_ARROW[0].y);
+	Point comp_start_point(AnConst::RIGHT_VERTICAL_ARROW[0].x, AnConst::RIGHT_VERTICAL_ARROW[0].y);
 
-	double vertical_length   = AnConst::LEFT_VERTICAL_ARROW[3] - AnConst::LEFT_VERTICAL_ARROW[1];
-	double horizontal_length = AnConst::LEFT_HORIZONTAL_ARROW[2] - AnConst::LEFT_HORIZONTAL_ARROW[0];
+	double vertical_length   = AnConst::LEFT_VERTICAL_ARROW[1].y - AnConst::LEFT_VERTICAL_ARROW[0].y;
+	double horizontal_length = AnConst::LEFT_HORIZONTAL_ARROW[1].x - AnConst::LEFT_HORIZONTAL_ARROW[0].x;
 	int max_size = AnConst::MEASURE_FREQ * AnConst::MEASURE_NUM;
 
 	Point current;
@@ -74,27 +61,27 @@ void draw_graphic(Results measurements[AnConst::MEASURE_NUM], Color color){
 	glFlush();
 }
 
-void draw_octangle(const double points[8], Color color) {
+void draw_octangle(const Point points[4], Color color) {
 	color.set();
 
 	glBegin(GL_QUADS);
-	for (int i = 0; i < 8; i += 2)
-		glVertex2d(points[i], points[i + 1]);
+	for (int i = 0; i < 4; ++i)
+		points[i].set();
 	glEnd();
 	glFlush();
 }
 
-void draw_arrow(const double points[8], Color color) {
+void draw_arrow(const Point points[4], Color color) {
 	color.set();
 
 	glBegin(GL_LINES);
-	for (int i = 0; i < 4; i += 2)
-		glVertex2d(points[i], points[i + 1]);
+	for (int i = 0; i < 2; ++i)
+		points[i].set();
 	glEnd();
 
 	glBegin(GL_TRIANGLES);
-	for (int i = 2; i < 8; i += 2)
-		glVertex2d(points[i], points[i + 1]);
+	for (int i = 1; i < 4; ++i)
+		points[i].set();
 	
 	glEnd();
 	glFlush();

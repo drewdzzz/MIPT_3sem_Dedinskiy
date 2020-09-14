@@ -1,53 +1,44 @@
 #ifndef SORT_INCLUDE
 #define SORT_INCLUDE
 
-template<class T>
-void mySwap(T& a, T& b) {
-    T temp = a;
-    a = b;
-    b = temp;
-}
-
-template<class T>
-void BubbleSort(T* begin, T* end) {
+template<class T, class Cmp>
+void BubbleSort(T* begin, T* end, Cmp cmp) {
 	for (T* curr1 = begin; curr1 != end; ++curr1)
 		for (T* curr2 = curr1; curr2 != end; ++curr2) 
-			if (*(curr2) < *(curr1)) {
-				T temp = *curr2;
-				*curr2 = *(curr1);
-				*(curr1) = temp;
+			if (cmp(curr2, curr1)) {
+				mySwap(curr1, curr2);
 			}
 }
 
 
 
 
-template<typename T>
-T* partition(T* begin, T* end) {
+template<typename T, typename Cmp>
+T* partition(T* begin, T* end, Cmp cmp) {
 
     T* move_place = begin - 1;
 
     T* it = begin;
 
     while (it < end) {
-        if(*it <= *end) {
+        if(cmp(it, end)) {
             ++move_place;
-            mySwap(*move_place, *it);
+            mySwap(move_place, it);
         }
         ++it;
     }
 
-    mySwap(*(move_place + 1), *end); 
+    mySwap(move_place + 1, end); 
 
     return ++move_place;
 }
 
-template<typename T>
-void QuickSort(T* begin, T* end) {
+template<typename T, typename Cmp>
+void QuickSort(T* begin, T* end, Cmp cmp) {
     if(begin != end && begin + 1 != end){
-        T* mid = partition (begin, end - 1);
-        QuickSort (begin, mid);
-        QuickSort (mid + 1, end);
+        T* mid = partition (begin, end - 1, cmp);
+        QuickSort (begin, mid, cmp);
+        QuickSort (mid + 1, end, cmp);
     }
 }
 
