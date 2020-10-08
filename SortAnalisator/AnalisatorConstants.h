@@ -17,8 +17,11 @@ struct Point{
 
 namespace AnConst{
 
-	const char QUICKSORT_BUTTON_TEXT[]  = "PRESS Q TO TEST QUICKSORT";
-	const char BUBBLESORT_BUTTON_TEXT[] = "PRESS B TO TEST BUBBLESORT";
+	const int SCREEN_HEIGHT = 720;
+	const int SCREEN_WIDTH  = 1280;
+
+	const char QUICKSORT_BUTTON_TEXT[]  = "QUICKSORT (You can also press Q)";
+	const char BUBBLESORT_BUTTON_TEXT[] = "BUBBLESORT (You can also press B)";
 	const char F_BUTTON_TEXT[]          = "PRESS F TO PAY RESPECT";
 	const char COPY_NUM[]               = "Copies";
 	const char COMP_NUM[]               = "Comporations";
@@ -78,6 +81,20 @@ namespace AnConst{
 		{0.9, -0.2},
 		{0.876, -0.216},
 		{0.876, -0.184}
+	};
+
+	const Point QUICKSORT_BUTTON_COORDS[4] = {
+		{-0.9, -0.4},
+		{-0.1, -0.4},
+		{-0.1, -0.8},
+		{-0.9, -0.8}
+	};
+
+	const Point BUBBLESORT_BUTTON_COORDS[4] = {
+		{0.1, -0.4},
+		{0.9, -0.4},
+		{0.9, -0.8},
+		{0.1, -0.8}
 	};
 }
 

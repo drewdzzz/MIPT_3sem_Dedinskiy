@@ -9,7 +9,36 @@
 #include"MeasureTools.hpp"
 #include"DrawTools.hpp"
 #include"TextTools.hpp"
+#include"Buttons.hpp"
 #include"Callbacks.hpp"
+
+Button QSORT_BUTTON({1.0, 0.0, 0.0}, {1.0, 0.451, 0.451}, {0.65, 0.0, 0.0}, AnConst::QUICKSORT_BUTTON_TEXT, AnConst::QUICKSORT_BUTTON_COORDS);
+
+Button BSORT_BUTTON({0.0, 1.0, 0.0}, {0.451, 1.0, 0.451}, {0.0, 0.65, 0.0}, AnConst::BUBBLESORT_BUTTON_TEXT, AnConst::BUBBLESORT_BUTTON_COORDS);
+
+void GetCursorPos(GLFWwindow* window, double* x, double* y) {
+	glfwGetCursorPos(window, x, y);
+	*x = 2 * *x / AnConst::SCREEN_WIDTH - 1.0;
+	*y = -2 * *y / AnConst::SCREEN_HEIGHT + 1.0;
+
+}
+
+void poll_button(GLFWwindow* window, const Button& button, void (*callback)(IntCount*, IntCount*, MyIntLess), Results* result_array) {
+	double x = 0.0;
+	double y = 0.0;
+	GetCursorPos(window, &x, &y);
+
+	if (x <= button.coordinates[1].x && x >= button.coordinates[0].x && y <= button.coordinates[1].y && y >= button.coordinates[2].y) {
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+			button.draw_active();
+			sort_test(callback, result_array);
+		}
+		else
+			button.draw_picked();
+	}
+	else
+		button.draw();
+}
 
 GLFWwindow* initCreateContextWindow(int argc, char** argv) {
 	GLFWwindow* window;
@@ -20,7 +49,7 @@ GLFWwindow* initCreateContextWindow(int argc, char** argv) {
 	glutInit(&argc, argv);
 
 	glfwWindowHint(GLFW_SAMPLES, 16);
-	window = glfwCreateWindow(1280, 720, "Graphics", NULL, NULL);
+	window = glfwCreateWindow(AnConst::SCREEN_WIDTH, AnConst::SCREEN_HEIGHT, "Graphics", NULL, NULL);
 
 	if (!window)
 	{
@@ -36,8 +65,6 @@ GLFWwindow* initCreateContextWindow(int argc, char** argv) {
 void main_loop(GLFWwindow* window) {
 	while (!glfwWindowShouldClose(window)) {
 
-		glfwWaitEvents();
-
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		colors::BACKGROUND.set_as_bg();
 
@@ -52,7 +79,12 @@ void main_loop(GLFWwindow* window) {
 		draw_graphic(TestRes::QUICKSORT, colors::QUICKSORT);
 		draw_graphic(TestRes::BUBBLESORT, colors::BUBBLESORT);
 
-		draw_text_and_measures(colors::WHITE, colors::BLACK);
+		// draw_text_and_measures(colors::WHITE, colors::BLACK);
+
+		poll_button(window, QSORT_BUTTON, QuickSort, TestRes::QUICKSORT);
+		poll_button(window, BSORT_BUTTON, BubbleSort, TestRes::BUBBLESORT);
+
+		glfwPollEvents();
 
 		glfwSwapBuffers(window);
 
@@ -67,6 +99,11 @@ int main(int argc, char** argv) {
 		return -1;
 
 	glfwSetKeyCallback(window, callbacks::key_check);
+
+	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+
+	glfwSetCursor(window, cursor);
+	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_FALSE);
 
 	main_loop(window);
 

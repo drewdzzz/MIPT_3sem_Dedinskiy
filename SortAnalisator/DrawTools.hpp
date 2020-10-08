@@ -42,7 +42,10 @@ void draw_graphic(Results measurements[AnConst::MEASURE_NUM], Color color){
 	for (int i = 1; i <= AnConst::MEASURE_NUM; ++i) {
 		current.x = copy_start_point.x + horizontal_length * double(i) * double(AnConst::MEASURE_FREQ) / max_size;
 		current.y = copy_start_point.y + vertical_length * double(measurements[i].copies) / AnConst::MAX_COPY_QUANTITY; 
-		glVertex2d(current.x, current.y);
+		if (current.y <= copy_start_point.y + vertical_length)
+			glVertex2d(current.x, current.y);
+		else	
+			break;
 	}
 
 	glEnd();
@@ -54,7 +57,10 @@ void draw_graphic(Results measurements[AnConst::MEASURE_NUM], Color color){
 	for (int i = 1; i <= AnConst::MEASURE_NUM; ++i) {
 		current.x = comp_start_point.x + horizontal_length * double(i) * double(AnConst::MEASURE_FREQ) / max_size;
 		current.y = comp_start_point.y + vertical_length * double(measurements[i].comps) / AnConst::MAX_COPY_QUANTITY; 
-		glVertex2d(current.x, current.y);
+		if (current.y <= copy_start_point.y + vertical_length)
+			glVertex2d(current.x, current.y);
+		else
+			break;
 	}	
 
 	glEnd();
