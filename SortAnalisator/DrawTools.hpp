@@ -1,6 +1,12 @@
 #ifndef DRAW_TOOLS_INCLUDE
 #define DRAW_TOOLS_INCLUDE
 
+class AbstractWindow {
+public:
+	virtual void draw() = 0;
+	// virtual void callbacks() = 0;
+};
+
 struct Color {
 	double red;
 	double green;
@@ -8,90 +14,121 @@ struct Color {
 
 	Color() = default;
 	Color(double red, double green, double blue): red(red), green(green), blue(blue) {}
-	Color (const Color& other) = default;
+	Color(const Color& other) = default;
 
 	void set() const {
 		glColor3d(red, green, blue);
 	}
 
 	void set_as_bg() const {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(red, green, blue, 0);
 	}
 };
 
-void draw_graphic(Results measurements[AnConst::MEASURE_NUM], Color color){
+template<typename MeasureType, int MeasureNum, int MeasureFreq, MeasureType MaxResult>
+class Graphic: public AbstractWindow {
+	MeasureType* MEASURES;
+	Point topLeft;
+	Point bottomRight;
+	Color color;
 
-	if (measurements[0].comps == 0)
-		return;
+public:
+	Graphic () = delete;
+	Graphic (Point topLeft, Point bottomRight, Color color, MeasureType* measures):
+	topLeft (topLeft),
+	bottomRight (bottomRight),
+	color (color),
+	MEASURES (measures) {}
 
-	Point copy_start_point(AnConst::LEFT_VERTICAL_ARROW[0].x, AnConst::LEFT_VERTICAL_ARROW[0].y);
-	Point comp_start_point(AnConst::RIGHT_VERTICAL_ARROW[0].x, AnConst::RIGHT_VERTICAL_ARROW[0].y);
+	void draw () override {
 
-	double vertical_length   = AnConst::LEFT_VERTICAL_ARROW[1].y - AnConst::LEFT_VERTICAL_ARROW[0].y;
-	double horizontal_length = AnConst::LEFT_HORIZONTAL_ARROW[1].x - AnConst::LEFT_HORIZONTAL_ARROW[0].x;
-	int max_size = AnConst::MEASURE_FREQ * AnConst::MEASURE_NUM;
+		Point start_point(topLeft.x, bottomRight.y);
 
-	Point current;
+		double vertical_length   = topLeft.y - bottomRight.y;
+		double horizontal_length = bottomRight.x - topLeft.x;
+		int max_size = MeasureNum * MeasureFreq;
 
-	color.set();
+		Point current;
 
-	glBegin(GL_LINE_STRIP);
+		color.set();
 
-	glVertex2d(copy_start_point.x, copy_start_point.y);
+		glBegin(GL_LINE_STRIP);
 
-	for (int i = 1; i <= AnConst::MEASURE_NUM; ++i) {
-		current.x = copy_start_point.x + horizontal_length * double(i) * double(AnConst::MEASURE_FREQ) / max_size;
-		current.y = copy_start_point.y + vertical_length * double(measurements[i].copies) / AnConst::MAX_COPY_QUANTITY; 
-		if (current.y <= copy_start_point.y + vertical_length)
-			glVertex2d(current.x, current.y);
-		else	
-			break;
+		start_point.set();
+
+		for (int i = 1; i <= MeasureNum; ++i) {
+			current.x = start_point.x + horizontal_length * double(i) * double(MeasureFreq) / max_size;
+			current.y = start_point.y + vertical_length * double(MEASURES[i]) / MaxResult; 
+			if (current.y > topLeft.y) {
+				glEnd();
+				glBegin(GL_LINE_STRIP);
+				continue;
+			}
+			current.set();
+		}
+
+		glEnd();
+		glFlush();
+	}
+};
+
+template <int N>
+class Polygon: public AbstractWindow {
+public:
+	Point coordinates[N];
+	Color color;
+
+public:
+
+	Polygon () = delete;
+
+	Polygon (const Point points[N], Color color): color (color) {
+		for (int i = 0; i < N; ++i)
+			coordinates[i] = points[i];
 	}
 
-	glEnd();
+	virtual void draw () override {
+		color.set();
 
-	glBegin(GL_LINE_STRIP);
+		glBegin (GL_POLYGON);
+		for (int i = 0; i < 4; ++i)
+			coordinates[i].set();
+		glEnd();
+		glFlush();	
+	}
+};
 
-	glVertex2d(comp_start_point.x, comp_start_point.y);
+using Octangle = Polygon<4>;
 
-	for (int i = 1; i <= AnConst::MEASURE_NUM; ++i) {
-		current.x = comp_start_point.x + horizontal_length * double(i) * double(AnConst::MEASURE_FREQ) / max_size;
-		current.y = comp_start_point.y + vertical_length * double(measurements[i].comps) / AnConst::MAX_COPY_QUANTITY; 
-		if (current.y <= copy_start_point.y + vertical_length)
-			glVertex2d(current.x, current.y);
-		else
-			break;
-	}	
 
-	glEnd();
-	glFlush();
-}
+class Arrow: public AbstractWindow {
+	Point coordinates[4];
+	Color color;
 
-void draw_octangle(const Point points[4], Color color) {
-	color.set();
+public:
 
-	glBegin(GL_QUADS);
-	for (int i = 0; i < 4; ++i)
-		points[i].set();
-	glEnd();
-	glFlush();
-}
+	Arrow (const Point points[4], Color color): color (color) {
+		for (int i = 0; i < 4; ++i)
+			coordinates[i] = points[i];
+	}
 
-void draw_arrow(const Point points[4], Color color) {
-	color.set();
+	virtual void draw () override {
+		color.set();
 
-	glBegin(GL_LINES);
-	for (int i = 0; i < 2; ++i)
-		points[i].set();
-	glEnd();
+		glBegin(GL_LINES);
+		for (int i = 0; i < 2; ++i)
+			coordinates[i].set();
+		glEnd();
 
-	glBegin(GL_TRIANGLES);
-	for (int i = 1; i < 4; ++i)
-		points[i].set();
-	
-	glEnd();
-	glFlush();
-}
+		glBegin(GL_TRIANGLES);
+		for (int i = 1; i < 4; ++i)
+			coordinates[i].set();
+		
+		glEnd();
+		glFlush();
+	}
+};
 
 namespace colors{
 	const Color BLACK(0.0, 0.0, 0.0);

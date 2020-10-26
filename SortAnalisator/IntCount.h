@@ -13,6 +13,7 @@ struct Results {
 	Results& operator=(const Results& other) {
 		copies = other.copies;
 		comps = other.comps;
+		return *this;
 	}
 };
 
@@ -43,10 +44,12 @@ public:
 
 	IntCount& operator=(const IntCount& other) {
 		value = other.value;
+		return *this;
 	}
 
 	IntCount& operator=(int value) {
 		this->value = value;
+		return *this;
 	}
 
 	bool operator<(const IntCount& other) {
