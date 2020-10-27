@@ -1,10 +1,25 @@
 #ifndef DRAW_TOOLS_INCLUDE
 #define DRAW_TOOLS_INCLUDE
 
+enum KEY_STATES {
+	PRESS = GLFW_PRESS,
+	RELEASE = GLFW_RELEASE
+};
+
+class WindowStat {
+	Point mousePos;
+
+	int leftMouseButton;
+	int rightMouseButton;
+	int middleMouseButton;
+	int numKeys[10];
+	int ButtonKeys['Z'-'A'+1];
+};
+
 class AbstractWindow {
 public:
 	virtual void draw() = 0;
-	// virtual void callbacks() = 0;
+	virtual void callback(const WindowStat& status) = 0;
 };
 
 struct Color {
@@ -41,7 +56,9 @@ public:
 	color (color),
 	MEASURES (measures) {}
 
-	void draw () override {
+	virtual void callback (const WindowStat& status) override {}
+
+	virtual void draw () override {
 
 		Point start_point(topLeft.x, bottomRight.y);
 
@@ -88,6 +105,8 @@ public:
 			coordinates[i] = points[i];
 	}
 
+	virtual void callback (const WindowStat& status) override {}
+
 	virtual void draw () override {
 		color.set();
 
@@ -113,6 +132,8 @@ public:
 			coordinates[i] = points[i];
 	}
 
+	virtual void callback (const WindowStat& status) override {}
+
 	virtual void draw () override {
 		color.set();
 
@@ -134,7 +155,11 @@ namespace colors{
 	const Color BLACK(0.0, 0.0, 0.0);
 	const Color WHITE(1.0, 1.0, 1.0);
 	const Color QUICKSORT(1.0, 0.0, 0.0);
+	const Color QUICKSORT_PICKED(0.75, 0.0, 0.0);
+	const Color QUICKSORT_ACTIVE(0.4, 0.0, 0.0);
 	const Color BUBBLESORT(0.0, 1.0, 0.0);
+	const Color BUBBLESORT_PICKED(0.0, 0.75, 0.0);
+	const Color BUBBLESORT_ACTIVE(0.0, 0.4, 0.0);
 	const Color BACKGROUND(0.04, 0.255, 0.29);
 }
 

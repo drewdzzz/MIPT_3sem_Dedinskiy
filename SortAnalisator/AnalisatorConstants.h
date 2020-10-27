@@ -1,20 +1,6 @@
 #ifndef ANALISATOR_CONSTANTS_INCLUDE
 #define ANALISATOR_CONSTANTS_INCLUDE
 
-
-struct Point{
-	double x;
-	double y;
-
-	Point() = default;
-	Point(double x, double y): x(x), y(y) {
-	}	
-
-	void set() const {
-		glVertex2d(x, y);
-	}
-};
-
 namespace AnConst{
 
 	const int SCREEN_HEIGHT = 720;
