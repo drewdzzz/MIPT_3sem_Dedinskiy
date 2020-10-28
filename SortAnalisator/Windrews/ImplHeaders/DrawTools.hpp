@@ -1,21 +1,6 @@
 #ifndef DRAW_TOOLS_INCLUDE
 #define DRAW_TOOLS_INCLUDE
 
-enum KEY_STATES {
-	PRESS = GLFW_PRESS,
-	RELEASE = GLFW_RELEASE
-};
-
-class WindowStat {
-	Point mousePos;
-
-	int leftMouseButton;
-	int rightMouseButton;
-	int middleMouseButton;
-	int numKeys[10];
-	int ButtonKeys['Z'-'A'+1];
-};
-
 class AbstractWindow {
 public:
 	virtual void draw() = 0;

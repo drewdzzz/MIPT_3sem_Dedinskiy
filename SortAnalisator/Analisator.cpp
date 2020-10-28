@@ -11,8 +11,17 @@
 void main_loop(Windrew* window) {
 	while (!window->shouldClose()) {
 		window->draw();
+		window->pollEvents();
 		glfwPollEvents();
 	}
+}
+
+void test_qsort() {
+	sort_test(QuickSort, TestRes::QUICKSORT_COPIES, TestRes::QUICKSORT_COMPS);
+}
+
+void test_bsort() {
+	sort_test(BubbleSort, TestRes::BUBBLESORT_COPIES, TestRes::BUBBLESORT_COMPS);
 }
 
 int main(int argc, char** argv) {
@@ -23,9 +32,6 @@ int main(int argc, char** argv) {
 		return -1;
 
 	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-
-	sort_test(QuickSort, TestRes::QUICKSORT_COPIES, TestRes::QUICKSORT_COMPS);
-	sort_test(BubbleSort, TestRes::BUBBLESORT_COPIES, TestRes::BUBBLESORT_COMPS);
 
 	glfwSetCursor(window->main_window, cursor);
 	glfwSetInputMode(window->main_window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_FALSE);
@@ -57,12 +63,20 @@ int main(int argc, char** argv) {
 	(AnConst::RIGHT_VERTICAL_ARROW[1], AnConst::RIGHT_HORIZONTAL_ARROW[1], colors::QUICKSORT, TestRes::QUICKSORT_COMPS),
 	right_octangle);
 
+	// window->make_underwindow (
+		// new Button(colors::QUICKSORT, colors::QUICKSORT_PICKED, colors::QUICKSORT_ACTIVE, AnConst::QUICKSORT_BUTTON_TEXT, AnConst::QUICKSORT_BUTTON_COORDS),
+		// nullptr);
+
+	// window->make_underwindow (
+		// new Button(colors::BUBBLESORT, colors::BUBBLESORT_PICKED, colors::BUBBLESORT_ACTIVE, AnConst::BUBBLESORT_BUTTON_TEXT, AnConst::BUBBLESORT_BUTTON_COORDS),
+		// nullptr);
+
 	window->make_underwindow (
-		new Button(colors::QUICKSORT, colors::QUICKSORT_PICKED, colors::QUICKSORT_ACTIVE, AnConst::QUICKSORT_BUTTON_TEXT, AnConst::QUICKSORT_BUTTON_COORDS),
+		 new KeyButton(GLFW_KEY_Q, test_qsort),
 		nullptr);
 
 	window->make_underwindow (
-		new Button(colors::BUBBLESORT, colors::BUBBLESORT_PICKED, colors::BUBBLESORT_ACTIVE, AnConst::BUBBLESORT_BUTTON_TEXT, AnConst::BUBBLESORT_BUTTON_COORDS),
+		 new KeyButton(GLFW_KEY_B, test_bsort),
 		nullptr);
 
 		// draw_text_and_measures(colors::WHITE, colors::BLACK);

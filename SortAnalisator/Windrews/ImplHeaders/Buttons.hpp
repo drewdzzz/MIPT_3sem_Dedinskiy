@@ -1,5 +1,21 @@
 #pragma once
 
+class KeyButton: public AbstractWindow {
+protected:
+	int key;
+	void (*func)(void) = nullptr;
+public:
+	void draw() override {}
+	void callback(const WindowStat& status) override {
+		if (status.key.key == key && status.key.action == GLFW_PRESS)
+			func();
+	}
+
+	KeyButton(int key, void (*func)(void)):
+	key (key),
+	func (func) {}
+};
+
 class Button: public AbstractWindow {
 protected:
 	Color picked_color;
@@ -37,7 +53,7 @@ public:
 	}
 
 	virtual void callback(const WindowStat& status) override {
-		
+
 	}
 
 };
