@@ -1,28 +1,22 @@
 #include <iostream>
-#include "Windrews/Windrews.hpp"
+#include "../Windrews/Windrews.hpp"
 
 const Color WHITE = {1.0, 1.0, 1.0};
 const Point WHITE_OCTANGLE[] = {
     {-1.0, 1.0},
-    {1.0, 1.0},
     {1.0, -0.75},
-    {-1.0, -0.75}
 };
 
 const Color BLUE = {0.0, 0.0, 1.0};
 const Point BLUE_OCTANGLE[] = {
     {-1.0, -0.75},
-    {1.0, -0.75},
     {1.0, -2.0},
-    {-1.0, -2.0}
 };
 
 const Color RED = {1.0, 0.0, 0.0};
 const Point RED_OCTANGLE[] = {
     {-1.0, -2.0},
-    {1.0, -2.0},
     {1.0, -4.0},
-    {-1.0, -4.0}
 };
 
 int main(int argc, char** argv) {
@@ -31,10 +25,7 @@ int main(int argc, char** argv) {
     if (window == nullptr)
 		return -1;
 
-	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-
-	glfwSetCursor(window->main_window, cursor);
-	glfwSetInputMode(window->main_window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_FALSE);    
+	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);   
 
     window->make_underwindow(new Octangle(WHITE_OCTANGLE, WHITE), nullptr);
     window->make_underwindow(new Octangle(BLUE_OCTANGLE, BLUE), nullptr);

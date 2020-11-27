@@ -27,11 +27,9 @@ namespace AnConst{
 	const int MEASURE_FREQ = 10;
 	const int MEASURE_NUM  = 50;
 
-	const Point LEFT_COPY_OCTANGLE[4] = {
+	const Point LEFT_COPY_OCTANGLE[2] = {
 		{-0.95, 0.95},
-		{-0.05, 0.95},
-		{-0.05, -0.25},
-		{-0.95, -0.25}
+		{-0.05, -0.25}
 	};
 
 	const Point LEFT_VERTICAL_ARROW[4] = {
@@ -48,11 +46,9 @@ namespace AnConst{
 		{-0.124, -0.184}
 	};
 
-	const Point RIGHT_COMP_OCTANGLE[4] = {
+	const Point RIGHT_COMP_OCTANGLE[2] = {
 		{0.05, 0.95},
-		{0.95, 0.95},
-		{0.95, -0.25},
-		{0.05, -0.25}
+		{0.95, -0.25}
 	};
 
 	const Point RIGHT_VERTICAL_ARROW[4] = {
@@ -71,17 +67,25 @@ namespace AnConst{
 
 	const Point QUICKSORT_BUTTON_COORDS[4] = {
 		{-0.9, -0.4},
-		{-0.1, -0.4},
-		{-0.1, -0.8},
-		{-0.9, -0.8}
+		{-0.1, -0.8}
 	};
 
 	const Point BUBBLESORT_BUTTON_COORDS[4] = {
 		{0.1, -0.4},
-		{0.9, -0.4},
 		{0.9, -0.8},
-		{0.1, -0.8}
 	};
+}
+
+namespace colors{
+	const Color BLACK(0.0, 0.0, 0.0);
+	const Color WHITE(1.0, 1.0, 1.0);
+	const Color QUICKSORT(1.0, 0.0, 0.0);
+	const Color QUICKSORT_PICKED(0.75, 0.0, 0.0);
+	const Color QUICKSORT_ACTIVE(0.4, 0.0, 0.0);
+	const Color BUBBLESORT(0.0, 1.0, 0.0);
+	const Color BUBBLESORT_PICKED(0.0, 0.75, 0.0);
+	const Color BUBBLESORT_ACTIVE(0.0, 0.4, 0.0);
+	const Color BACKGROUND(0.04, 0.255, 0.29);
 }
 
 

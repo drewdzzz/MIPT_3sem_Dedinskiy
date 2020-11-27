@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "Windrews/Windrews.hpp"
+#include "../Windrews/Windrews.hpp"
 #include "Sort.hpp"
 #include "IntCount.h"
 #include "AnalisatorConstants.h"
@@ -31,11 +31,6 @@ int main(int argc, char** argv) {
 	if (window == nullptr)
 		return -1;
 
-	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-
-	glfwSetCursor(window->main_window, cursor);
-	glfwSetInputMode(window->main_window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_FALSE);
-
 	WindowNode* left_octangle = nullptr;
 	WindowNode* right_octangle = nullptr;
 
@@ -63,13 +58,23 @@ int main(int argc, char** argv) {
 	(AnConst::RIGHT_VERTICAL_ARROW[1], AnConst::RIGHT_HORIZONTAL_ARROW[1], colors::QUICKSORT, TestRes::QUICKSORT_COMPS),
 	right_octangle);
 
-	// window->make_underwindow (
-		// new Button(colors::QUICKSORT, colors::QUICKSORT_PICKED, colors::QUICKSORT_ACTIVE, AnConst::QUICKSORT_BUTTON_TEXT, AnConst::QUICKSORT_BUTTON_COORDS),
-		// nullptr);
+	window->make_underwindow (
+		new Button(colors::QUICKSORT, 
+		           colors::QUICKSORT_PICKED, 
+				   colors::QUICKSORT_ACTIVE, 
+				   AnConst::QUICKSORT_BUTTON_TEXT, 
+				   AnConst::QUICKSORT_BUTTON_COORDS,
+				   test_qsort),
+		nullptr);
 
-	// window->make_underwindow (
-		// new Button(colors::BUBBLESORT, colors::BUBBLESORT_PICKED, colors::BUBBLESORT_ACTIVE, AnConst::BUBBLESORT_BUTTON_TEXT, AnConst::BUBBLESORT_BUTTON_COORDS),
-		// nullptr);
+	window->make_underwindow (
+		new Button(colors::BUBBLESORT, 
+		           colors::BUBBLESORT_PICKED, 
+				   colors::BUBBLESORT_ACTIVE, 
+				   AnConst::BUBBLESORT_BUTTON_TEXT, 
+				   AnConst::BUBBLESORT_BUTTON_COORDS,
+				   test_bsort),
+		nullptr);
 
 	window->make_underwindow (
 		 new KeyButton(GLFW_KEY_Q, test_qsort),
@@ -88,7 +93,7 @@ int main(int argc, char** argv) {
 
 	main_loop(window);
 
-	glfwTerminate();
+	windrewsTerminate();
 
 	return 0;
 }

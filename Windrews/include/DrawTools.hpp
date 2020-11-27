@@ -5,6 +5,7 @@ class AbstractWindow {
 public:
 	virtual void draw() = 0;
 	virtual void callback(const WindowStat& status) = 0;
+	virtual void move(const Point& moveVec) = 0;
 };
 
 struct Color {
@@ -43,6 +44,11 @@ public:
 
 	virtual void callback (const WindowStat& status) override {}
 
+	virtual void move (const Point& moveVec) override {
+		topLeft += moveVec;
+		bottomRight += moveVec;
+	}
+
 	virtual void draw () override {
 
 		Point start_point(topLeft.x, bottomRight.y);
@@ -77,17 +83,20 @@ public:
 
 template <int N>
 class Polygon: public AbstractWindow {
-public:
 	Point coordinates[N];
-	Color color;
-
 public:
+	Color color;
 
 	Polygon () = delete;
 
 	Polygon (const Point points[N], Color color): color (color) {
 		for (int i = 0; i < N; ++i)
 			coordinates[i] = points[i];
+	}
+
+	virtual void move (const Point& moveVec) override {
+		for (int i = 0; i < N; ++i)
+			coordinates[i] += moveVec;
 	}
 
 	virtual void callback (const WindowStat& status) override {}
@@ -101,20 +110,63 @@ public:
 		glEnd();
 		glFlush();	
 	}
+
 };
 
-using Octangle = Polygon<4>;
+class Octangle: public AbstractWindow {
+public:
+	Point topLeft;
+	Point bottomRight;
+	Color color;
+	Octangle (const Point points[2], Color color): color (color) {
+		if (points[0].x >= points[1].x) {
+			bottomRight = points[0];
+			topLeft = points[1];
+		}
+		else {
+			bottomRight = points[1];
+			topLeft = points[0];
+		}
+	}
 
+	virtual void move (const Point& moveVec) override {
+		topLeft += moveVec;
+		bottomRight += moveVec;
+	}
+
+	virtual void callback (const WindowStat& status) override {}
+
+	virtual void draw () override {
+		color.set();
+
+		Point topRight = {bottomRight.x, topLeft.y};
+		Point bottomLeft = {topLeft.x, bottomRight.y};
+
+		glBegin (GL_QUADS);
+		topLeft.set();
+		topRight.set();
+		bottomRight.set();
+		bottomLeft.set();
+		glEnd();
+		glFlush();	
+	}
+
+};
 
 class Arrow: public AbstractWindow {
-	Point coordinates[4];
-	Color color;
-
+	static const int POINT_NUM = 4;
+	Point coordinates[POINT_NUM];
 public:
+	Color color;
 
 	Arrow (const Point points[4], Color color): color (color) {
 		for (int i = 0; i < 4; ++i)
 			coordinates[i] = points[i];
+	}
+
+	virtual void move (const Point& moveVec) override {
+		for (int i = 0; i < POINT_NUM; ++i)
+			coordinates[i] += moveVec;
 	}
 
 	virtual void callback (const WindowStat& status) override {}
@@ -135,17 +187,5 @@ public:
 		glFlush();
 	}
 };
-
-namespace colors{
-	const Color BLACK(0.0, 0.0, 0.0);
-	const Color WHITE(1.0, 1.0, 1.0);
-	const Color QUICKSORT(1.0, 0.0, 0.0);
-	const Color QUICKSORT_PICKED(0.75, 0.0, 0.0);
-	const Color QUICKSORT_ACTIVE(0.4, 0.0, 0.0);
-	const Color BUBBLESORT(0.0, 1.0, 0.0);
-	const Color BUBBLESORT_PICKED(0.0, 0.75, 0.0);
-	const Color BUBBLESORT_ACTIVE(0.0, 0.4, 0.0);
-	const Color BACKGROUND(0.04, 0.255, 0.29);
-}
 
 #endif

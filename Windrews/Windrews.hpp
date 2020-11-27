@@ -46,6 +46,10 @@ public:
 	keyAction key;
 };
 
+#include "include/DrawTools.hpp"
+#include "include/TextTools.hpp"
+#include "include/Buttons.hpp"
+
 class EventManager {
 	GLFWwindow* window;
 	int screen_heigth;
@@ -93,13 +97,6 @@ public:
 };
 
 std::queue<keyAction> EventManager::keys;
-
-
-
-
-#include "ImplHeaders/DrawTools.hpp"
-#include "ImplHeaders/TextTools.hpp"
-#include "ImplHeaders/Buttons.hpp"
 
 
 class WindowsTree;
@@ -246,7 +243,18 @@ GLFWwindow* initCreateContextWindow(int argc, char** argv, int heigth, int width
 }
 
 Windrew* windrewsInit(int argc, char** argv, Color color, int heigth, int width) {
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
 	GLFWwindow* window = initCreateContextWindow(argc, argv, heigth, width);
+
+	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+
+	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+
+	glfwSetCursor(window, cursor);
 
 	if (window == nullptr)
 		return nullptr;
