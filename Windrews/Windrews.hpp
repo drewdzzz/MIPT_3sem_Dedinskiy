@@ -2,6 +2,7 @@
 
 #include <queue>
 #include <map>
+#include <stack>
 #include <functional>
 #include <GLFW/glfw3.h>
 #include <GL/glut.h>
@@ -30,9 +31,57 @@ struct Point{
 	} 
 };
 
+struct viewPortState {
+	int x;
+	int y;
+	int width;
+	int height;
+
+	viewPortState(int x, int y, int width, int height):
+	x(x),
+	y(y),
+	width(width),
+	height(height)
+	{}
+
+	viewPortState(const Point& point, int width, int height):
+	x(point.x),
+	y(point.y),
+	width(width),
+	height(height)
+	{}
+};
+
+void windrewsViewPort(const viewPortState& state) {
+	glViewport(state.x, state.y, state.width, state.height);
+}
+
+void windrewsViewPort(int x, int y, int width, int height) {
+	glViewport(x, y, width, height);
+}
+
+// Point leftBottomToMiddle(const Point& point, int screen_width, int screen_height) {
+
+// }
+
+// Point middleToLeftBottom(const Point& point, int screen_width, int screen_height) {
+// 	Point new_point;
+// 	new_point.x = (point.x + 1) * screen_width / 2;
+// 	new_point.y = (point.y + 1) * screen_height / 2;
+// 	return new_point;
+// }
+
+Point mouseToMiddle(const Point& point, viewPortState state) {
+	Point ans;
+	ans.x = 2 * point.x / state.width - 1.0;
+	ans.y = 2 * point.y / state.height - 1.0;
+	return ans;
+}
+
+
 struct keyAction {
-	int key = 0;
-	int action = 0;
+	int key = -1;
+	int action = -1;
 };
 
 enum KEY_STATES {
@@ -41,9 +90,24 @@ enum KEY_STATES {
 };
 
 class WindowStat {
-public:
+	int screen_height;
 	Point mousePos;
 	keyAction key;
+public:
+
+	Point getMousePos(const viewPortState& state) const {
+		Point res = mousePos;
+		res.y = screen_height - res.y;
+		res.x -= state.x;
+		res.y -= state.y;
+		return mouseToMiddle(res, state);
+	}
+
+	keyAction getKeyAction() const {
+		return key;
+	}
+
+	friend class EventManager;
 };
 
 #include "include/DrawTools.hpp"
@@ -58,9 +122,7 @@ class EventManager {
 	Point getMousePos(GLFWwindow* window, int screen_heigth, int screen_width) {
 		double x;
 		double y;
-		glfwGetCursorPos(window, &x, &y);
-		mousePos.x = 2 * x / screen_width - 1.0;
-		mousePos.y = -2 * y / screen_heigth + 1.0;	
+		glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
 		return mousePos;
 	}
 
@@ -91,6 +153,7 @@ public:
 			status.key = keys.front();
 			keys.pop();
 		}
+		status.screen_height = screen_heigth;
 		status.mousePos = getMousePos(window, screen_heigth, screen_width);
 		return status;
 	}
@@ -99,7 +162,37 @@ public:
 std::queue<keyAction> EventManager::keys;
 
 
-class WindowsTree;
+class WindowNode;
+
+class WindowsTree {
+protected:
+	std::stack<viewPortState> viewPorts;
+
+public:
+	Point startPoint;
+	Color bg_color;
+	GLFWwindow* main_window;
+	std::vector<WindowNode*> UnderWindows;
+	int screen_height;
+	int screen_width;
+
+	WindowsTree (GLFWwindow* window, Color color, int screen_height, int screen_width);
+	~WindowsTree ();
+	WindowsTree (const WindowsTree& other) = delete;
+	WindowsTree (WindowsTree&& other) = delete;
+	WindowsTree& operator= (const WindowsTree& other) = delete;
+	WindowsTree& operator= (WindowsTree&& other) = delete;
+
+	WindowNode* make_underwindow (AbstractWindow* new_window, WindowNode* node);
+
+	void draw ();
+
+	void move(const Point& moveVec);
+
+	void addViewPort(const viewPortState& state);
+	viewPortState getViewPort();
+	void rmViewPort();
+};
 
 struct bad_main_window {
 	WindowsTree* actual_main_window;
@@ -120,73 +213,47 @@ public:
 	window (new_window), 
 	main_window (new_main_window) {};
 
-	void move(const Point& moveVec) {
-		window->move(moveVec);
+	void moveUnderWindows(const Point& moveVec) {
 		for (auto w:UnderWindows)
 			w->move(moveVec);
 	}
 
+	void move(const Point& moveVec) {
+		window->move(moveVec, main_window->getViewPort());
+		if (!window->changeViewPort())
+			moveUnderWindows(moveVec);
+	}
+
 	void draw() {
-		window->draw ();
+		if (window->changeViewPort()) {
+			main_window->addViewPort(window->getViewPortChange());
+		}
+
+		auto state = main_window->getViewPort();
+		window->draw(state);
 		for (auto w: UnderWindows)
-			w->draw ();
+			w->draw();
+
+		if (window->changeViewPort()) {
+			main_window->rmViewPort();
+			windrewsViewPort(main_window->getViewPort());
+		}
 	}
 
 	void pollEvents(const WindowStat& status) {
-		window->callback(status);
-		for (auto w: UnderWindows)
-			w->pollEvents(status);
-	}
-};
-
-class WindowsTree {
-public:
-	Point startPoint;
-	Color bg_color;
-	GLFWwindow* main_window;
-	std::vector<WindowNode*> UnderWindows;
-	int screen_height;
-	int screen_width;
-
-	WindowsTree (GLFWwindow* window, Color color, int screen_height, int screen_width): 
-	main_window (window), 
-	bg_color (color),
-	screen_height (screen_height),
-	screen_width (screen_width),
-	startPoint (0, 0) {}
-
-	~WindowsTree () = default;
-	WindowsTree (const WindowsTree& other) = delete;
-	WindowsTree (WindowsTree&& other) = delete;
-	WindowsTree& operator= (const WindowsTree& other) = delete;
-	WindowsTree& operator= (WindowsTree&& other) = delete;
-
-	WindowNode* make_underwindow (AbstractWindow* new_window, WindowNode* node) {
-		WindowNode* res = nullptr;
-		
-		if (node == nullptr)
-			UnderWindows.push_back (res = new WindowNode (new_window, this));
-		else {
-			if (node->main_window != this)
-				throw bad_main_window (node->main_window, this);
-			else
-				node->UnderWindows.push_back (res = new WindowNode (new_window, this));
+		if (window->changeViewPort()) {
+			main_window->addViewPort(window->getViewPortChange());
 		}
 
-		return res;
-	}
-
-	void draw () {
-		bg_color.set_as_bg ();
-		for (auto& w: UnderWindows)
-			w->draw ();
-		glfwSwapBuffers(main_window);
-	}
-
-	void move(const Point& moveVec) {
-		startPoint += moveVec;
+		auto state = main_window->getViewPort();
+		window->callback(status, state);
 		for (auto w: UnderWindows)
-			w->move(moveVec);
+			w->pollEvents(status);
+
+		if (window->changeViewPort()) {
+			main_window->rmViewPort();
+			windrewsViewPort(main_window->getViewPort());
+		}
 	}
 };
 
@@ -196,7 +263,9 @@ private:
 public:
 	Windrew(GLFWwindow* window, Color color, int heigth, int width): 
 	WindowsTree(window, color, heigth, width), 
-	events(window, heigth, width) {}
+	events(window, heigth, width) {
+		viewPorts.emplace(0, 0, width, heigth);
+	}
 	
 	~Windrew () = default;
 	Windrew (const WindowsTree& other) = delete;
@@ -265,3 +334,61 @@ Windrew* windrewsInit(int argc, char** argv, Color color, int heigth, int width)
 void windrewsTerminate() {
 	glfwTerminate();
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////WINDOWS TREE IMPLEMENTATION///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+WindowsTree::WindowsTree (GLFWwindow* window, Color color, int screen_height, int screen_width): 
+	main_window (window), 
+	bg_color (color),
+	screen_height (screen_height),
+	screen_width (screen_width),
+	startPoint (0, 0) {}
+
+	WindowsTree::~WindowsTree () = default;
+
+	WindowNode*  WindowsTree::make_underwindow (AbstractWindow* new_window, WindowNode* node) {
+		WindowNode* res = nullptr;
+		
+		if (node == nullptr)
+			UnderWindows.push_back (res = new WindowNode (new_window, this));
+		else {
+			if (node->main_window != this)
+				throw bad_main_window (node->main_window, this);
+			else
+				node->UnderWindows.push_back (res = new WindowNode (new_window, this));
+		}
+
+		return res;
+	}
+
+	void WindowsTree::draw () {
+		glViewport(0, 0, screen_width, screen_height);
+		bg_color.set_as_bg ();
+		for (auto& w: UnderWindows)
+			w->draw ();
+		glfwSwapBuffers(main_window);
+	}
+
+	void WindowsTree::move(const Point& moveVec) {
+		startPoint += moveVec;
+		for (auto w: UnderWindows)
+			w->move(moveVec);
+	}
+
+	void WindowsTree::addViewPort(const viewPortState& state) {
+		viewPorts.push(state);
+	}
+
+	viewPortState WindowsTree::getViewPort() {
+		return viewPorts.top();
+	}
+
+	void WindowsTree::rmViewPort() {
+		viewPorts.pop();
+	}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -3,9 +3,17 @@
 
 class AbstractWindow {
 public:
-	virtual void draw() = 0;
-	virtual void callback(const WindowStat& status) = 0;
-	virtual void move(const Point& moveVec) = 0;
+	viewPortState viewChange;
+	virtual void draw(const viewPortState& state) = 0;
+	virtual void callback(const WindowStat& status, const viewPortState& state) = 0;
+	virtual void move(const Point& moveVec, const viewPortState& state) = 0;
+	virtual bool changeViewPort() = 0;
+	viewPortState getViewPortChange() {
+		return viewChange;
+	}
+
+	AbstractWindow():
+	viewChange(0, 0, 0, 0) {}
 };
 
 struct Color {
@@ -42,14 +50,14 @@ public:
 	color (color),
 	MEASURES (measures) {}
 
-	virtual void callback (const WindowStat& status) override {}
+	virtual void callback (const WindowStat& status, const viewPortState& state) override {}
 
-	virtual void move (const Point& moveVec) override {
+	virtual void move (const Point& moveVec, const viewPortState& state) override {
 		topLeft += moveVec;
 		bottomRight += moveVec;
 	}
 
-	virtual void draw () override {
+	virtual void draw (const viewPortState& state) override {
 
 		Point start_point(topLeft.x, bottomRight.y);
 
@@ -79,6 +87,10 @@ public:
 		glEnd();
 		glFlush();
 	}
+
+	virtual bool changeViewPort() {
+		return false;
+	}
 };
 
 template <int N>
@@ -94,14 +106,14 @@ public:
 			coordinates[i] = points[i];
 	}
 
-	virtual void move (const Point& moveVec) override {
+	virtual void move (const Point& moveVec, const viewPortState& state) override {
 		for (int i = 0; i < N; ++i)
 			coordinates[i] += moveVec;
 	}
 
-	virtual void callback (const WindowStat& status) override {}
+	virtual void callback (const WindowStat& status, const viewPortState& state) override {}
 
-	virtual void draw () override {
+	virtual void draw (const viewPortState& state) override {
 		color.set();
 
 		glBegin (GL_POLYGON);
@@ -111,6 +123,9 @@ public:
 		glFlush();	
 	}
 
+	virtual bool changeViewPort() {
+		return false;
+	}
 };
 
 class Octangle: public AbstractWindow {
@@ -129,14 +144,19 @@ public:
 		}
 	}
 
-	virtual void move (const Point& moveVec) override {
+	Octangle (const Point& topLeft, const Point& bottomRight, Color color):
+	topLeft (topLeft),
+	bottomRight (bottomRight),
+	color (color) {}
+
+	virtual void move (const Point& moveVec, const viewPortState& state) override {
 		topLeft += moveVec;
 		bottomRight += moveVec;
 	}
 
-	virtual void callback (const WindowStat& status) override {}
+	virtual void callback (const WindowStat& status, const viewPortState& state) override {}
 
-	virtual void draw () override {
+	virtual void draw (const viewPortState& state) override {
 		color.set();
 
 		Point topRight = {bottomRight.x, topLeft.y};
@@ -149,6 +169,10 @@ public:
 		bottomLeft.set();
 		glEnd();
 		glFlush();	
+	}
+
+	virtual bool changeViewPort() {
+		return false;
 	}
 
 };
@@ -164,14 +188,14 @@ public:
 			coordinates[i] = points[i];
 	}
 
-	virtual void move (const Point& moveVec) override {
+	virtual void move (const Point& moveVec, const viewPortState& state) override {
 		for (int i = 0; i < POINT_NUM; ++i)
 			coordinates[i] += moveVec;
 	}
 
-	virtual void callback (const WindowStat& status) override {}
+	virtual void callback (const WindowStat& status, const viewPortState& state) override {}
 
-	virtual void draw () override {
+	virtual void draw(const viewPortState& state) override {
 		color.set();
 
 		glBegin(GL_LINES);
@@ -186,6 +210,42 @@ public:
 		glEnd();
 		glFlush();
 	}
+
+	virtual bool changeViewPort() {
+		return false;
+	}
 };
 
+class UnderScreen: public AbstractWindow {
+	Point bottomLeft;
+	Color color;
+	Octangle background;
+	int width;
+	int height;
+
+public:
+
+	UnderScreen(const Point& bottomLeft, int width, int height, const Color& color):
+	bottomLeft(bottomLeft),
+	color(color),
+	width(width),
+	height(height),
+	background(Point(-1, 1), Point(1, -1), color) {
+		viewChange = viewPortState(bottomLeft, width, height); 	
+	}
+	
+	virtual void callback(const WindowStat& status, const viewPortState& state) {};
+	virtual void move(const Point& moveVec, const viewPortState& state) {
+		bottomLeft += Point(moveVec.x * state.width, moveVec.y * state.height);
+	}
+
+	virtual void draw(const viewPortState& state) {
+		glViewport(int(bottomLeft.x), int(bottomLeft.y), width, height);
+		background.draw(state);
+	}
+
+	virtual bool changeViewPort() {
+		return true;
+	}
+};
 #endif

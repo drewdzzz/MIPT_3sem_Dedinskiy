@@ -1,73 +1,82 @@
 #pragma once
 
 class ScrollBar: public AbstractWindow {
-protected:
-	Color hover_color;
-	Color active_color;
-	Color color;
-	void (ScrollBar::*draw_method)() = &ScrollBar::draw_inactive;
+	Octangle background;
+	Octangle shape;
+	double scale;
+	double startPos;
 
-	bool mouseInside(const WindowStat& status){
-		Point mousePos = status.mousePos;
+	bool mouseInside(const WindowStat& status, const viewPortState& state){
+		Point mousePos = status.getMousePos(state);
 		if (mousePos.x <= shape.bottomRight.x && mousePos.x >= shape.topLeft.x &&
 		    mousePos.y <= shape.topLeft.y && mousePos.y >= shape.bottomRight.y)
 			return true;
 		else
 			return false;
 	}
-	
+
 public:
-	Octangle shape;
+	ScrollBar() = delete;
+	ScrollBar(const Point& topLeft, const Point& bottomRight, double scale, double startPos, Color color, Color backColor):
+	background(topLeft, bottomRight, backColor),
+	scale(scale),
+	startPos(startPos),
+	shape({0,0}, {0,0}, color)
+	{
+		Point barTopLeft;
+		Point barBottomRight;
+		barTopLeft.x = topLeft.x;
+		barBottomRight.x = bottomRight.x;
 
-	ScrollBar(const Color color, const Color hover_color, const Color active_color, const Point points[4]): 
-	shape (points, color),
-	hover_color(hover_color),
-	active_color(active_color)
-	{}
+		barTopLeft.y = bottomRight.y + (topLeft.y - bottomRight.y) * (scale + 1)/2;		
+		barBottomRight.y = topLeft.y - (topLeft.y - bottomRight.y) * (scale + 1)/2;		
 
-	void draw_inactive() {
-		shape.color = color;
-		shape.draw();
+		barTopLeft.y += (topLeft.y - barTopLeft.y) * startPos;
+		barBottomRight.y += (barBottomRight.y - bottomRight.y) * startPos;
+
+		shape.bottomRight = barBottomRight;
+		shape.topLeft = barTopLeft;
 	}
 
-	void draw_hover() {
-		shape.color = hover_color;
-		shape.draw();
+	virtual void draw(const viewPortState& state) override {
+		background.draw(state);
+		shape.draw(state);
 	}
 
-	void draw_active() {
-		shape.color = active_color;
-		shape.draw();
-	}
-
-	virtual void move (const Point& moveVec) override {
-		shape.move(moveVec);
-	}
-
-	virtual void draw() override {
-		(this->*draw_method)();
-	}
-
-	virtual void callback(const WindowStat& status) override {
+	virtual void callback(const WindowStat& status, const viewPortState& state) {
+		Point mousePos = status.getMousePos(state);
+		// std::cout << mousePos.x << ' ' << mousePos.y << '\n';
+		if (!mouseInside(status, state))
+			return;
 
 	}
+	virtual void move(const Point& moveVec, const viewPortState& state) {}
+	virtual bool changeViewPort() {
+		return false;
+	}
+
 };
+
 
 class KeyButton: public AbstractWindow {
 protected:
 	int key;
 	std::function<void()> func;
 public:
-	virtual void move(const Point& moveVec) override {}
-	virtual void draw() override {}
-	virtual void callback(const WindowStat& status) override {
-		if (status.key.key == key && status.key.action == GLFW_PRESS)
+	virtual void move(const Point& moveVec, const viewPortState& state) override {}
+	virtual void draw(const viewPortState& state) override {}
+	virtual void callback(const WindowStat& status, const viewPortState& state) override {
+		if (status.getKeyAction().key == key && status.getKeyAction().action == GLFW_PRESS)
 			func();
 	}
 
 	KeyButton(int key, std::function<void()> func):
 	key (key),
 	func (func) {}
+
+	virtual bool changeViewPort() {
+		return false;
+	}
 };
 
 class Button: public AbstractWindow {
@@ -76,12 +85,12 @@ protected:
 	Color active_color;
 	Color color;
 	const char* text;
-	bool isClicked = false;
-	void (Button::*draw_method)() = &Button::draw_inactive;
+	bool wasPressed = false;
+	void (Button::*draw_method)(const viewPortState& state) = &Button::draw_inactive;
 	std::function<void()> action;
 
-	bool mouseInside(const WindowStat& status){
-		Point mousePos = status.mousePos;
+	bool mouseInside(const WindowStat& status, const viewPortState& state){
+		Point mousePos = status.getMousePos(state);
 		if (mousePos.x <= shape.bottomRight.x && mousePos.x >= shape.topLeft.x &&
 		    mousePos.y <= shape.topLeft.y && mousePos.y >= shape.bottomRight.y)
 			return true;
@@ -101,51 +110,55 @@ public:
 	action(action)
 	{}
 
-	void draw_inactive() {
+	void draw_inactive(const viewPortState& state) {
 		shape.color = color;
-		shape.draw();
+		shape.draw(state);
 	}
 
-	void draw_hover() {
+	void draw_hover(const viewPortState& state) {
 		shape.color = hover_color;
-		shape.draw();
+		shape.draw(state);
 	}
 
-	void draw_active() {
+	void draw_active(const viewPortState& state) {
 		shape.color = active_color;
-		shape.draw();
+		shape.draw(state);
 	}
 
-	virtual void move(const Point& moveVec) override {
-		shape.move(moveVec);
+	virtual void move(const Point& moveVec, const viewPortState& state) override {
+		shape.move(moveVec, state);
 	}
 
-	virtual void draw() override {
-		(this->*draw_method)();
+	virtual void draw(const viewPortState& state) override {
+		(this->*draw_method)(state);
 	}
 
-	virtual void callback(const WindowStat& status) override {
-		if (!mouseInside(status)) {
-			draw_method = &Button::draw_inactive;
-			return;
+	virtual void callback(const WindowStat& status, const viewPortState& state) override {
+		int key = status.getKeyAction().key;
+		int act = status.getKeyAction().action;
+		if (mouseInside(status, state)) {
+			if (key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_PRESS) {
+				draw_method = &Button::draw_active;
+				wasPressed = true;
+			} else if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
+				wasPressed = false;
+				draw_method = &Button::draw_inactive;
+				action();
+			} else if (!wasPressed) {
+				draw_method = &Button::draw_hover;
+			}
+		} else {
+			if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && GLFW_RELEASE) {
+				draw_method = &Button::draw_inactive;
+				wasPressed = false;
+			} else {
+				draw_method = &Button::draw_inactive;
+			}
 		}
 
-		int key = status.key.key;
-		int action = status.key.action;
-
-		if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-			isClicked = true;
-			draw_method = &Button::draw_active;
-		}
-
-		if (mouseInside(status) && isClicked && (key == GLFW_MOUSE_BUTTON_LEFT) && (action == GLFW_RELEASE)) {
-			isClicked = false;
-			this->action();
-		}
-
-		if (mouseInside(status) && (key == GLFW_MOUSE_BUTTON_LEFT) && (action == GLFW_RELEASE)) {
-			draw_method = &Button::draw_hover;
-		}
 	}
 
+	virtual bool changeViewPort() {
+		return false;
+	}
 };
