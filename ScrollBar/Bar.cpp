@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     window->make_underwindow(new Octangle(BLUE_OCTANGLE, BLUE), view);
     window->make_underwindow(new Octangle(WHITE_OCTANGLE, WHITE), view);
     window->make_underwindow(new Octangle(RED_OCTANGLE, RED), view);
-    window->make_underwindow(new ScrollBar({0.8, 1.0}, {1.0, -1.0}, 0.5, 0.0, {0,0,0}, {1,1,0}), view);
+    window->make_underwindow(new ScrollBar({0.8, 1.0}, {1.0, -1.0}, 0.5, 0.0, {1,1,1}, {1,1,0}, {0.6, 0.6, 0}, {0.2, 0.2, 0}), view);
 
     window->make_underwindow(new KeyButton(GLFW_KEY_DOWN, [view](){view->moveUnderWindows({0.0, 0.2});}), nullptr);
     window->make_underwindow(new KeyButton(GLFW_KEY_UP, [view](){view->moveUnderWindows({0.0, -0.2});}), nullptr);

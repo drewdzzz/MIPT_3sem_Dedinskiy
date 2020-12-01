@@ -5,6 +5,11 @@ class ScrollBar: public AbstractWindow {
 	Octangle shape;
 	double scale;
 	double startPos;
+	Color color;
+	Color hover_color;
+	Color active_color;
+
+	bool wasPressed = false;
 
 	bool mouseInside(const WindowStat& status, const viewPortState& state){
 		Point mousePos = status.getMousePos(state);
@@ -15,9 +20,29 @@ class ScrollBar: public AbstractWindow {
 			return false;
 	}
 
+	void (ScrollBar::*draw_method)(const viewPortState& state) = &ScrollBar::draw_inactive;
+
+	void draw_inactive(const viewPortState& state) {
+		shape.color = color;
+		shape.draw(state);
+	}
+
+	void draw_hover(const viewPortState& state) {
+		shape.color = hover_color;
+		shape.draw(state);
+	}
+
+	void draw_active(const viewPortState& state) {
+		shape.color = active_color;
+		shape.draw(state);
+	}
+
 public:
 	ScrollBar() = delete;
-	ScrollBar(const Point& topLeft, const Point& bottomRight, double scale, double startPos, Color color, Color backColor):
+	ScrollBar(const Point& topLeft, const Point& bottomRight, double scale, double startPos, Color backColor, Color color, Color hover_color, Color active_color):
+	color(color),
+	hover_color(hover_color),
+	active_color(active_color),
 	background(topLeft, bottomRight, backColor),
 	scale(scale),
 	startPos(startPos),
@@ -40,16 +65,34 @@ public:
 
 	virtual void draw(const viewPortState& state) override {
 		background.draw(state);
-		shape.draw(state);
+		(this->*draw_method)(state);
 	}
 
-	virtual void callback(const WindowStat& status, const viewPortState& state) {
-		Point mousePos = status.getMousePos(state);
-		// std::cout << mousePos.x << ' ' << mousePos.y << '\n';
-		if (!mouseInside(status, state))
-			return;
+	virtual void callback(const WindowStat& status, const viewPortState& state) override {
+		int key = status.getKeyAction().key;
+		int act = status.getKeyAction().action;
+		if (mouseInside(status, state)) {
+			if (key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_PRESS) {
+				draw_method = &ScrollBar::draw_active;
+				wasPressed = true;
+			} else if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
+				wasPressed = false;
+				draw_method = &ScrollBar::draw_inactive;
+				// action();
+			} else if (!wasPressed) {
+				draw_method = &ScrollBar::draw_hover;
+			}
+		} else {
+			if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
+				draw_method = &ScrollBar::draw_inactive;
+				wasPressed = false;
+			} else if (!wasPressed) {
+				draw_method = &ScrollBar::draw_inactive;
+			}
+		}
 
 	}
+
 	virtual void move(const Point& moveVec, const viewPortState& state) {}
 	virtual bool changeViewPort() {
 		return false;
@@ -148,10 +191,10 @@ public:
 				draw_method = &Button::draw_hover;
 			}
 		} else {
-			if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && GLFW_RELEASE) {
+			if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
 				draw_method = &Button::draw_inactive;
 				wasPressed = false;
-			} else {
+			} else if (!wasPressed) {
 				draw_method = &Button::draw_inactive;
 			}
 		}
