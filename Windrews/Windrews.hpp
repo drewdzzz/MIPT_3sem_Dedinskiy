@@ -29,6 +29,13 @@ struct Point{
 		this->y += other.y;
 		return *this;
 	} 
+
+	Point operator*(double k) const {
+		Point ans;
+		ans.x = k*x;
+		ans.y = k*y;
+		return ans;
+	}
 };
 
 struct viewPortState {
@@ -108,6 +115,27 @@ public:
 	}
 
 	friend class EventManager;
+};
+
+class WindowsTree;
+class AbstractWindow;
+
+
+class WindowNode {
+public:
+	WindowsTree* main_window;
+	AbstractWindow* window;
+	std::vector<WindowNode*> UnderWindows;
+
+	WindowNode(AbstractWindow* new_window, WindowsTree* new_main_window);
+
+	void moveUnderWindows(const Point& moveVec);
+
+	void move(const Point& moveVec);
+
+	void draw();
+
+	void pollEvents(const WindowStat& status);
 };
 
 #include "include/DrawTools.hpp"
@@ -201,60 +229,6 @@ struct bad_main_window {
 	bad_main_window (WindowsTree* actual_main_window, WindowsTree* current_main_window): 
 	actual_main_window (actual_main_window), 
 	current_main_window(current_main_window) {}	
-};
-
-class WindowNode {
-public:
-	WindowsTree* main_window;
-	AbstractWindow* window;
-	std::vector<WindowNode*> UnderWindows;
-
-	WindowNode(AbstractWindow* new_window, WindowsTree* new_main_window): 
-	window (new_window), 
-	main_window (new_main_window) {};
-
-	void moveUnderWindows(const Point& moveVec) {
-		for (auto w:UnderWindows)
-			w->move(moveVec);
-	}
-
-	void move(const Point& moveVec) {
-		window->move(moveVec, main_window->getViewPort());
-		if (!window->changeViewPort())
-			moveUnderWindows(moveVec);
-	}
-
-	void draw() {
-		if (window->changeViewPort()) {
-			main_window->addViewPort(window->getViewPortChange());
-		}
-
-		auto state = main_window->getViewPort();
-		window->draw(state);
-		for (auto w: UnderWindows)
-			w->draw();
-
-		if (window->changeViewPort()) {
-			main_window->rmViewPort();
-			windrewsViewPort(main_window->getViewPort());
-		}
-	}
-
-	void pollEvents(const WindowStat& status) {
-		if (window->changeViewPort()) {
-			main_window->addViewPort(window->getViewPortChange());
-		}
-
-		auto state = main_window->getViewPort();
-		window->callback(status, state);
-		for (auto w: UnderWindows)
-			w->pollEvents(status);
-
-		if (window->changeViewPort()) {
-			main_window->rmViewPort();
-			windrewsViewPort(main_window->getViewPort());
-		}
-	}
 };
 
 class Windrew: public WindowsTree {
@@ -392,3 +366,55 @@ WindowsTree::WindowsTree (GLFWwindow* window, Color color, int screen_height, in
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////WINDOW NODE IMPLEMENTATION///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	WindowNode::WindowNode(AbstractWindow* new_window, WindowsTree* new_main_window): 
+	window (new_window), 
+	main_window (new_main_window) {};
+	
+	void WindowNode::moveUnderWindows(const Point& moveVec) {
+		for (auto w:UnderWindows)
+			w->move(moveVec);
+	}
+
+	void WindowNode::move(const Point& moveVec) {
+		window->move(moveVec, main_window->getViewPort());
+		if (!window->changeViewPort())
+			moveUnderWindows(moveVec);
+	}
+
+	void WindowNode::draw() {
+		if (window->changeViewPort()) {
+			main_window->addViewPort(window->getViewPortChange());
+		}
+
+		auto state = main_window->getViewPort();
+		window->draw(state);
+		for (auto w: UnderWindows)
+			w->draw();
+
+		if (window->changeViewPort()) {
+			main_window->rmViewPort();
+			windrewsViewPort(main_window->getViewPort());
+		}
+	}
+
+	void WindowNode::pollEvents(const WindowStat& status) {
+		if (window->changeViewPort()) {
+			main_window->addViewPort(window->getViewPortChange());
+		}
+
+		auto state = main_window->getViewPort();
+		window->callback(status, state);
+		for (auto w: UnderWindows)
+			w->pollEvents(status);
+
+		if (window->changeViewPort()) {
+			main_window->rmViewPort();
+			windrewsViewPort(main_window->getViewPort());
+		}
+	}

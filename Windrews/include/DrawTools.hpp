@@ -234,17 +234,17 @@ public:
 		viewChange = viewPortState(bottomLeft, width, height); 	
 	}
 	
-	virtual void callback(const WindowStat& status, const viewPortState& state) {};
-	virtual void move(const Point& moveVec, const viewPortState& state) {
+	virtual void callback(const WindowStat& status, const viewPortState& state) override {};
+	virtual void move(const Point& moveVec, const viewPortState& state) override {
 		bottomLeft += Point(moveVec.x * state.width, moveVec.y * state.height);
 	}
 
-	virtual void draw(const viewPortState& state) {
+	virtual void draw(const viewPortState& state) override {
 		glViewport(int(bottomLeft.x), int(bottomLeft.y), width, height);
 		background.draw(state);
 	}
 
-	virtual bool changeViewPort() {
+	virtual bool changeViewPort() override {
 		return true;
 	}
 };

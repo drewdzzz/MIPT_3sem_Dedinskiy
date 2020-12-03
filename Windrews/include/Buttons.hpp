@@ -1,6 +1,6 @@
 #pragma once
 
-class ScrollBar: public AbstractWindow {
+class HorizontalScrollBar: public AbstractWindow {
 	Octangle background;
 	Octangle shape;
 	double scale;
@@ -8,6 +8,8 @@ class ScrollBar: public AbstractWindow {
 	Color color;
 	Color hover_color;
 	Color active_color;
+	Point prevMousePos;
+	WindowNode* scrollableWindow;
 
 	bool wasPressed = false;
 
@@ -20,7 +22,7 @@ class ScrollBar: public AbstractWindow {
 			return false;
 	}
 
-	void (ScrollBar::*draw_method)(const viewPortState& state) = &ScrollBar::draw_inactive;
+	void (HorizontalScrollBar::*draw_method)(const viewPortState& state) = &HorizontalScrollBar::draw_inactive;
 
 	void draw_inactive(const viewPortState& state) {
 		shape.color = color;
@@ -37,16 +39,33 @@ class ScrollBar: public AbstractWindow {
 		shape.draw(state);
 	}
 
+	void move_bar(const Point& moveVec, const viewPortState& state) {
+		double top_offset = background.topLeft.y - shape.topLeft.y; 
+		double bottom_offset = background.bottomRight.y - shape.bottomRight.y;
+		Point newMove;
+		newMove.x = moveVec.x;
+		if (moveVec.y > 0 && moveVec.y > top_offset)
+			newMove.y = top_offset;
+		else if (moveVec.y < 0 && moveVec.y < bottom_offset)
+			newMove.y = bottom_offset;
+		else
+			newMove.y = moveVec.y;
+		shape.move(newMove, state);
+		scrollableWindow->moveUnderWindows(newMove * (-1.0));
+	}
+
 public:
-	ScrollBar() = delete;
-	ScrollBar(const Point& topLeft, const Point& bottomRight, double scale, double startPos, Color backColor, Color color, Color hover_color, Color active_color):
+	HorizontalScrollBar() = delete;
+	HorizontalScrollBar(const Point& topLeft, const Point& bottomRight, double scale, double startPos, WindowNode* scrollableWindow, Color backColor, Color color, Color hover_color, Color active_color):
 	color(color),
 	hover_color(hover_color),
 	active_color(active_color),
 	background(topLeft, bottomRight, backColor),
 	scale(scale),
 	startPos(startPos),
-	shape({0,0}, {0,0}, color)
+	shape({0,0}, {0,0}, color),
+	prevMousePos(0, 0),
+	scrollableWindow(scrollableWindow)
 	{
 		Point barTopLeft;
 		Point barBottomRight;
@@ -73,33 +92,41 @@ public:
 		int act = status.getKeyAction().action;
 		if (mouseInside(status, state)) {
 			if (key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_PRESS) {
-				draw_method = &ScrollBar::draw_active;
+				prevMousePos = status.getMousePos(state);
+				draw_method = &HorizontalScrollBar::draw_active;
 				wasPressed = true;
 			} else if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
 				wasPressed = false;
-				draw_method = &ScrollBar::draw_inactive;
+				draw_method = &HorizontalScrollBar::draw_inactive;
 				// action();
 			} else if (!wasPressed) {
-				draw_method = &ScrollBar::draw_hover;
+				draw_method = &HorizontalScrollBar::draw_hover;
 			}
 		} else {
 			if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
-				draw_method = &ScrollBar::draw_inactive;
+				draw_method = &HorizontalScrollBar::draw_inactive;
 				wasPressed = false;
 			} else if (!wasPressed) {
-				draw_method = &ScrollBar::draw_inactive;
+				draw_method = &HorizontalScrollBar::draw_inactive;
 			}
+		}
+
+		if (wasPressed) {
+			Point currMousePos = status.getMousePos(state);
+			Point moveVec(0, currMousePos.y - prevMousePos.y);
+			prevMousePos = currMousePos;
+			move_bar(moveVec, state);
 		}
 
 	}
 
 	virtual void move(const Point& moveVec, const viewPortState& state) {}
+
 	virtual bool changeViewPort() {
 		return false;
 	}
 
 };
-
 
 class KeyButton: public AbstractWindow {
 protected:
