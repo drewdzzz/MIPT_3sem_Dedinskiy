@@ -15,33 +15,44 @@ class HorizontalScrollBar: public AbstractWindow {
 
 	bool mouseInside(const WindowStat& status, const viewPortState& state){
 		Point mousePos = status.getMousePos(state);
-		if (mousePos.x <= shape.bottomRight.x && mousePos.x >= shape.topLeft.x &&
-		    mousePos.y <= shape.topLeft.y && mousePos.y >= shape.bottomRight.y)
+		Point bottomRight;
+		Point topLeft;
+		shape.getPoints(topLeft, bottomRight);
+		if (mousePos.x <= bottomRight.x && mousePos.x >= topLeft.x &&
+		    mousePos.y <= topLeft.y && mousePos.y >= bottomRight.y)
 			return true;
 		else
 			return false;
 	}
 
-	void (HorizontalScrollBar::*draw_method)(const viewPortState& state) = &HorizontalScrollBar::draw_inactive;
+	void (HorizontalScrollBar::*draw_method)(const viewPortState& state, const Shaders& shaders) = &HorizontalScrollBar::draw_inactive;
 
-	void draw_inactive(const viewPortState& state) {
-		shape.color = color;
-		shape.draw(state);
+	void draw_inactive(const viewPortState& state, const Shaders& shaders) {
+		shape.setColor(color);
+		shape.draw(state, shaders);
 	}
 
-	void draw_hover(const viewPortState& state) {
-		shape.color = hover_color;
-		shape.draw(state);
+	void draw_hover(const viewPortState& state, const Shaders& shaders) {
+		shape.setColor(hover_color);
+		shape.draw(state, shaders);
 	}
 
-	void draw_active(const viewPortState& state) {
-		shape.color = active_color;
-		shape.draw(state);
+	void draw_active(const viewPortState& state, const Shaders& shaders) {
+		shape.setColor(active_color);
+		shape.draw(state, shaders);
 	}
 
 	void move_bar(const Point& moveVec, const viewPortState& state) {
-		double top_offset = background.topLeft.y - shape.topLeft.y; 
-		double bottom_offset = background.bottomRight.y - shape.bottomRight.y;
+		
+		Point background_topLeft;
+		Point background_bottomRight;
+		Point shape_topLeft;
+		Point shape_bottomRight;
+		background.getPoints(background_topLeft, background_bottomRight);
+		shape.getPoints(shape_topLeft, shape_bottomRight);
+		
+		double top_offset = background_topLeft.y - shape_topLeft.y; 
+		double bottom_offset = background_bottomRight.y - shape_bottomRight.y;
 		Point newMove;
 		newMove.x = moveVec.x;
 		if (moveVec.y > 0 && moveVec.y > top_offset)
@@ -78,13 +89,12 @@ public:
 		barTopLeft.y += (topLeft.y - barTopLeft.y) * startPos;
 		barBottomRight.y += (barBottomRight.y - bottomRight.y) * startPos;
 
-		shape.bottomRight = barBottomRight;
-		shape.topLeft = barTopLeft;
+		shape.setPoints(barTopLeft, barBottomRight);
 	}
 
-	virtual void draw(const viewPortState& state) override {
-		background.draw(state);
-		(this->*draw_method)(state);
+	virtual void draw(const viewPortState& state, const Shaders& shaders) override {
+		background.draw(state, shaders);
+		(this->*draw_method)(state, shaders);
 	}
 
 	virtual void callback(const WindowStat& status, const viewPortState& state) override {
@@ -97,7 +107,7 @@ public:
 				wasPressed = true;
 			} else if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
 				wasPressed = false;
-				draw_method = &HorizontalScrollBar::draw_inactive;
+				draw_method = &HorizontalScrollBar::draw_hover;
 				// action();
 			} else if (!wasPressed) {
 				draw_method = &HorizontalScrollBar::draw_hover;
@@ -134,7 +144,7 @@ protected:
 	std::function<void()> func;
 public:
 	virtual void move(const Point& moveVec, const viewPortState& state) override {}
-	virtual void draw(const viewPortState& state) override {}
+	virtual void draw(const viewPortState& state, const Shaders& shaders) override {}
 	virtual void callback(const WindowStat& status, const viewPortState& state) override {
 		if (status.getKeyAction().key == key && status.getKeyAction().action == GLFW_PRESS)
 			func();
@@ -149,58 +159,43 @@ public:
 	}
 };
 
+template<class Base>
 class Button: public AbstractWindow {
 protected:
-	Color hover_color;
-	Color active_color;
-	Color color;
-	const char* text;
 	bool wasPressed = false;
-	void (Button::*draw_method)(const viewPortState& state) = &Button::draw_inactive;
 	std::function<void()> action;
 
 	bool mouseInside(const WindowStat& status, const viewPortState& state){
 		Point mousePos = status.getMousePos(state);
-		if (mousePos.x <= shape.bottomRight.x && mousePos.x >= shape.topLeft.x &&
-		    mousePos.y <= shape.topLeft.y && mousePos.y >= shape.bottomRight.y)
+		Point bottomRight;
+		Point topLeft;
+		shape.getPoints(topLeft, bottomRight);
+		if (mousePos.x <= bottomRight.x && mousePos.x >= topLeft.x &&
+		    mousePos.y <= topLeft.y && mousePos.y >= bottomRight.y)
 			return true;
 		else
 			return false;
 	}
 
-public:
-	Octangle shape;
+	virtual void inactive_state() = 0;
+	virtual void active_state() = 0;
+	virtual void hover_state() = 0;
 
-	Button(const Color color, const Color hover_color, const Color active_color, const char* text, const Point points[4], std::function<void()> action): 
-	shape (points, color),
-	color (color),
-	hover_color(hover_color),
-	active_color(active_color),
-	text(text),
+public:
+	Base shape;
+
+	Button(Base base_shape, std::function<void()> action): 
+	shape (base_shape),
 	action(action)
 	{}
 
-	void draw_inactive(const viewPortState& state) {
-		shape.color = color;
-		shape.draw(state);
-	}
-
-	void draw_hover(const viewPortState& state) {
-		shape.color = hover_color;
-		shape.draw(state);
-	}
-
-	void draw_active(const viewPortState& state) {
-		shape.color = active_color;
-		shape.draw(state);
-	}
 
 	virtual void move(const Point& moveVec, const viewPortState& state) override {
 		shape.move(moveVec, state);
 	}
 
-	virtual void draw(const viewPortState& state) override {
-		(this->*draw_method)(state);
+	virtual void draw(const viewPortState& state,  const Shaders& shaders) override {
+		shape.draw(state, shaders);
 	}
 
 	virtual void callback(const WindowStat& status, const viewPortState& state) override {
@@ -208,25 +203,77 @@ public:
 		int act = status.getKeyAction().action;
 		if (mouseInside(status, state)) {
 			if (key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_PRESS) {
-				draw_method = &Button::draw_active;
+				active_state();
 				wasPressed = true;
 			} else if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
 				wasPressed = false;
-				draw_method = &Button::draw_inactive;
+				inactive_state();
 				action();
 			} else if (!wasPressed) {
-				draw_method = &Button::draw_hover;
+				hover_state();
 			}
 		} else {
 			if (wasPressed && key == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_RELEASE) {
-				draw_method = &Button::draw_inactive;
+				inactive_state();
 				wasPressed = false;
 			} else if (!wasPressed) {
-				draw_method = &Button::draw_inactive;
+				inactive_state();
 			}
 		}
 
 	}
+
+	virtual bool changeViewPort() {
+		return false;
+	}
+};
+
+class PrimitiveButton: public Button<Octangle> {
+protected:
+	Color hover_color;
+	Color active_color;
+	Color inactive_color;
+
+
+	void inactive_state() override {
+		shape.setColor(inactive_color);
+	}
+	void active_state() override {
+		shape.setColor(active_color);
+	}
+	void hover_state() override {
+		shape.setColor(hover_color);
+	}
+
+public:
+
+	PrimitiveButton(const Color inactive_color, const Color hover_color, const Color active_color, const Point points[2], std::function<void()> action): 
+	Button(Octangle(points, {0,0,0}), action),
+	inactive_color(inactive_color),
+	hover_color(hover_color),
+	active_color(active_color)
+	{}
+
+	virtual bool changeViewPort() {
+		return false;
+	}
+};
+
+class TextureButton: public Button<Picture> {
+protected:
+
+	void inactive_state() override {
+	}
+	void active_state() override {
+	}
+	void hover_state() override {
+	}
+
+public:
+
+	TextureButton(const char* img_path, const Point points[2], std::function<void()> action): 
+	Button(Picture(points, img_path), action)
+	{}
 
 	virtual bool changeViewPort() {
 		return false;

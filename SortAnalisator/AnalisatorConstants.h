@@ -65,12 +65,12 @@ namespace AnConst{
 		{0.876, -0.184}
 	};
 
-	const Point QUICKSORT_BUTTON_COORDS[4] = {
+	const Point QUICKSORT_BUTTON_COORDS[2] = {
 		{-0.9, -0.4},
 		{-0.1, -0.8}
 	};
 
-	const Point BUBBLESORT_BUTTON_COORDS[4] = {
+	const Point BUBBLESORT_BUTTON_COORDS[2] = {
 		{0.1, -0.4},
 		{0.9, -0.8},
 	};

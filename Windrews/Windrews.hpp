@@ -4,8 +4,27 @@
 #include <map>
 #include <stack>
 #include <functional>
+#define GLEW_STATIC
+#include <GL/glew.h>		
 #include <GLFW/glfw3.h>
 #include <GL/glut.h>
+#include <SOIL/SOIL.h>
+#include "shaders/Shader.h"
+
+static const char* TEXTURE_VERTEX_SHADER_PATH = "shaders/textures.vs";
+static const char* TEXTURE_FRAG_SHADER_PATH = "shaders/textures.frag";
+static const char* PRIMITIVE_VERTEX_SHADER_PATH = "shaders/primitive.vs";
+static const char* PRIMITIVE_FRAG_SHADER_PATH = "shaders/primitive.frag";
+
+struct Shaders{
+	Shader textureShader;
+	Shader primitiveShader;
+
+	Shaders(const char* textureVs, const char* textureFrag, const char* primVs, const char* primFrag):
+	textureShader(textureVs, textureFrag),
+	primitiveShader(primVs, primFrag)
+	{}
+};
 
 struct Point{
 	double x;
@@ -133,7 +152,7 @@ public:
 
 	void move(const Point& moveVec);
 
-	void draw();
+	void draw(const Shaders& shaders);
 
 	void pollEvents(const WindowStat& status);
 };
@@ -213,8 +232,6 @@ public:
 
 	WindowNode* make_underwindow (AbstractWindow* new_window, WindowNode* node);
 
-	void draw ();
-
 	void move(const Point& moveVec);
 
 	void addViewPort(const viewPortState& state);
@@ -235,9 +252,12 @@ class Windrew: public WindowsTree {
 private:
 	EventManager events;
 public:
+	Shaders shaders;
+
 	Windrew(GLFWwindow* window, Color color, int heigth, int width): 
 	WindowsTree(window, color, heigth, width), 
-	events(window, heigth, width) {
+	events(window, heigth, width),
+	shaders(TEXTURE_VERTEX_SHADER_PATH, TEXTURE_FRAG_SHADER_PATH, PRIMITIVE_VERTEX_SHADER_PATH, PRIMITIVE_FRAG_SHADER_PATH) {
 		viewPorts.emplace(0, 0, width, heigth);
 	}
 	
@@ -261,13 +281,17 @@ public:
 	Point getStartPoint() {
 		return startPoint;
 	}
+
+	void draw ();
 };
 
 GLFWwindow* initCreateContextWindow(int argc, char** argv, int heigth, int width) {
 	GLFWwindow* window;
 
-	if (!glfwInit())
+	if (!glfwInit()) {
+		std::cerr << "Failed to initialize GLFW" << std::endl;
 		return nullptr;
+	}
 
 	glutInit(&argc, argv);
 
@@ -282,6 +306,13 @@ GLFWwindow* initCreateContextWindow(int argc, char** argv, int heigth, int width
 
 	glfwMakeContextCurrent(window);
 
+	glewExperimental = GL_TRUE;
+	if (glewInit() != GLEW_OK)
+	{
+		std::cerr << "Failed to initialize GLEW" << std::endl;
+		return nullptr;
+	}
+
 	return window;
 }
 
@@ -292,15 +323,19 @@ Windrew* windrewsInit(int argc, char** argv, Color color, int heigth, int width)
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 	GLFWwindow* window = initCreateContextWindow(argc, argv, heigth, width);
+	if (window == nullptr)
+		return nullptr;
 
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
 
 	glfwSetCursor(window, cursor);
-
-	if (window == nullptr)
-		return nullptr;
 
 	return new Windrew (window, color, heigth, width);
 }
@@ -338,11 +373,11 @@ WindowsTree::WindowsTree (GLFWwindow* window, Color color, int screen_height, in
 		return res;
 	}
 
-	void WindowsTree::draw () {
+	void Windrew::draw () {
 		glViewport(0, 0, screen_width, screen_height);
 		bg_color.set_as_bg ();
 		for (auto& w: UnderWindows)
-			w->draw ();
+			w->draw (shaders);
 		glfwSwapBuffers(main_window);
 	}
 
@@ -387,15 +422,15 @@ WindowsTree::WindowsTree (GLFWwindow* window, Color color, int screen_height, in
 			moveUnderWindows(moveVec);
 	}
 
-	void WindowNode::draw() {
+	void WindowNode::draw(const Shaders& shaders) {
 		if (window->changeViewPort()) {
 			main_window->addViewPort(window->getViewPortChange());
 		}
 
 		auto state = main_window->getViewPort();
-		window->draw(state);
+		window->draw(state, shaders);
 		for (auto w: UnderWindows)
-			w->draw();
+			w->draw(shaders);
 
 		if (window->changeViewPort()) {
 			main_window->rmViewPort();
