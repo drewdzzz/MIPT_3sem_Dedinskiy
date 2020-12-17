@@ -1,5 +1,10 @@
 #ifndef DRAW_TOOLS_INCLUDE
 #define DRAW_TOOLS_INCLUDE
+#include <set>
+#include <map>
+#include <vector>
+#include <cmath>
+
 
 class AbstractWindow {
 public:
@@ -101,21 +106,27 @@ template <int N>
 class Polygon: public AbstractWindow {
 	Point coordinates[N];
 	GLuint VAO, VBO;
-	GLfloat vertices[2*N];
+	GLfloat vertices[5*N];
 	Color color;
 
 	void make_vertices() {
 		for (int i = 0; i < N; ++i) {
-			vertices[2*i] = coordinates[i].x;
-			vertices[2*i + 1] = coordinates[i].y;
+			vertices[5*i] = coordinates[i].x;
+			vertices[5*i + 1] = coordinates[i].y;
+			vertices[5*i + 2] = color.red;
+			vertices[5*i + 3] = color.green;
+			vertices[5*i + 4] = color.blue;
 		}
 		glBindVertexArray(VAO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBO); 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), (GLvoid*)0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)(2 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}
@@ -138,6 +149,7 @@ public:
 	}
 	void setColor(const Color& color) {
 		this->color = color;
+		make_vertices();
 	}
 
 	virtual void move (const Point& moveVec, const viewPortState& state) override {
@@ -149,10 +161,7 @@ public:
 	virtual void callback (const WindowStat& status, const viewPortState& state) override {}
 
 	virtual void draw (const viewPortState& state, const Shaders& shaders) override {
-		GLint vertexColorLocation = glGetUniformLocation(shaders.primitiveShader.Program, "inColor");
 		shaders.primitiveShader.Use();
-		glUniform3f(vertexColorLocation, color.red, color.green, color.blue);
-
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POLYGON, 0, N);
 		glBindVertexArray(0);
@@ -168,7 +177,7 @@ public:
 class Octangle: public AbstractWindow {
 protected:
 
-	GLfloat vertices[8] = {};
+	GLfloat vertices[4*5] = {};
 	Point topLeft;
 	Point bottomRight;
 	Color color;
@@ -182,22 +191,31 @@ protected:
 		vertices[0] = topLeft.x;
 		vertices[1] = topLeft.y;
 
-		vertices[2] = topRight.x;
-		vertices[3] = topRight.y;
+		vertices[5] = topRight.x;
+		vertices[6] = topRight.y;
 
-		vertices[4] = bottomRight.x;
-		vertices[5] = bottomRight.y;
+		vertices[10] = bottomRight.x;
+		vertices[11] = bottomRight.y;
 
-		vertices[6] = bottomLeft.x;
-		vertices[7] = bottomLeft.y;
+		vertices[15] = bottomLeft.x;
+		vertices[16] = bottomLeft.y;
+
+		for (int i = 0; i < 20; i += 5) {
+			vertices[i+2] = color.red;
+			vertices[i+3] = color.green;
+			vertices[i+4] = color.blue;
+		}
 
 		glBindVertexArray(VAO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBO); 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), (GLvoid*)0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)(2 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}
@@ -243,6 +261,7 @@ public:
 
 	void setColor(const Color& color) {
 		this->color = color;
+		make_vertices();
 	}
 
 	Color getColor() {
@@ -258,9 +277,7 @@ public:
 	virtual void callback (const WindowStat& status, const viewPortState& state) override {}
 
 	virtual void draw (const viewPortState& state, const Shaders& shaders) override {
-		GLint vertexColorLocation = glGetUniformLocation(shaders.primitiveShader.Program, "inColor");
 		shaders.primitiveShader.Use();
-		glUniform3f(vertexColorLocation, color.red, color.green, color.blue);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_QUADS, 0, 4);
@@ -304,10 +321,10 @@ class Picture: public Octangle {
         glBindVertexArray(VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
         // Position attribute
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
@@ -319,6 +336,7 @@ class Picture: public Octangle {
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
         glEnableVertexAttribArray(2);
 
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0); // Unbind VAO
 
         int width, height;
@@ -376,20 +394,26 @@ class Arrow: public AbstractWindow {
 	static const int POINT_NUM = 4;
 	Point coordinates[POINT_NUM];
 
-	GLfloat line_vertices[4];
-	GLfloat end_vertices[6];
+	GLfloat line_vertices[2*5];
+	GLfloat end_vertices[3*5];
 
 	GLuint lineVAO, lineVBO, endVAO, endVBO;
 
 	void make_vertices() {
 		for (int i = 0; i < 2; ++i) {
-			line_vertices[2*i] = coordinates[i].x;
-			line_vertices[2*i + 1] = coordinates[i].y;
+			line_vertices[5*i] = coordinates[i].x;
+			line_vertices[5*i + 1] = coordinates[i].y;
+			line_vertices[5*i + 2] = color.red;
+			line_vertices[5*i + 3] = color.green;
+			line_vertices[5*i + 4] = color.blue;
 		}
 
 		for (int i = 0; i < 3; ++i) {
-			end_vertices[2*i] = coordinates[i+1].x;
-			end_vertices[2*i + 1] = coordinates[i+1].y;
+			end_vertices[5*i] = coordinates[i+1].x;
+			end_vertices[5*i + 1] = coordinates[i+1].y;
+			end_vertices[5*i + 2] = color.red;
+			end_vertices[5*i + 3] = color.green;
+			end_vertices[5*i + 4] = color.blue;
 		}
 
 		glBindVertexArray(lineVAO);
@@ -397,16 +421,22 @@ class Arrow: public AbstractWindow {
 		glBindBuffer(GL_ARRAY_BUFFER, lineVBO); 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(line_vertices), line_vertices, GL_DYNAMIC_DRAW);
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), (GLvoid*)0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)(2*sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
 
 		glBindVertexArray(endVAO);
 		
 		glBindBuffer(GL_ARRAY_BUFFER, endVBO); 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(end_vertices), end_vertices, GL_DYNAMIC_DRAW);
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), (GLvoid*)0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)(2*sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
@@ -437,9 +467,8 @@ public:
 	virtual void callback (const WindowStat& status, const viewPortState& state) override {}
 
 	virtual void draw(const viewPortState& state, const Shaders& shaders) override {
-		GLint vertexColorLocation = glGetUniformLocation(shaders.primitiveShader.Program, "inColor");
+		
 		shaders.primitiveShader.Use();
-		glUniform3f(vertexColorLocation, color.red, color.green, color.blue);
 
 		glBindVertexArray(lineVAO);
 		glDrawArrays(GL_LINES, 0, 2);
@@ -448,7 +477,7 @@ public:
 		glBindVertexArray(0);
 	}
 
-	virtual bool changeViewPort() {
+	virtual bool changeViewPort() override {
 		return false;
 	}
 };
@@ -478,11 +507,193 @@ public:
 
 	virtual void draw(const viewPortState& state, const Shaders& shaders) override {
 		glViewport(int(bottomLeft.x), int(bottomLeft.y), width, height);
-		background.draw(state, shaders);
+		background.draw(viewPortState(int(bottomLeft.x), int(bottomLeft.y), width, height), shaders);
 	}
 
 	virtual bool changeViewPort() override {
 		return true;
+	}
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+enum CANVAS_DRAW_MODES{
+		STOP, 
+		BRUSH
+};
+
+class Canvas: public AbstractWindow {
+	UnderScreen shape;
+	Octangle contur;
+	std::set<Point> drawedPoints;
+	std::map<Point, Color> colors;
+	bool wasPressed;
+
+	GLuint pointVAO, pointVBO;
+
+	CANVAS_DRAW_MODES draw_mode = STOP;
+
+	Point bottomLeft;
+	int radius;
+	int height;
+	int width;
+	Color drawColor;
+	GLfloat* pointVertices = nullptr;
+	bool mouseInside(const WindowStat& status, const viewPortState& state){
+		Point mousePos = status.getMousePos(state);
+		Point bottomRight;
+		Point topLeft;
+		contur.getPoints(topLeft, bottomRight);
+		if (mousePos.x <= bottomRight.x && mousePos.x >= topLeft.x &&
+		    mousePos.y <= topLeft.y && mousePos.y >= bottomRight.y)
+			return true;
+		else
+			return false;
+	}
+
+	void brushDrawProcess(const Point& mousePos, const viewPortState& state) {
+		// std::cout << "DRAW PROCESS\n";
+
+		Point middle = NORMAL_TO_PIXELS(mousePos, state);
+
+		colors[middle] = drawColor;
+		drawedPoints.insert(middle);
+
+
+		for (int r = 1; r < radius; ++r) {
+			for (double alpha = 0; alpha < 2 * M_PI; alpha += 0.2) {
+				Point curr = middle;
+				curr += Point(int(r * cos(alpha)), int(r * sin(alpha)));
+				colors[curr] = drawColor;
+				drawedPoints.insert(curr);
+			}
+		}
+
+	}
+
+	void draw_objects(const Shaders& shaders) {
+		make_vertices();
+
+		glPointSize(1.0);
+		shaders.primitiveShader.Use();
+
+		glBindVertexArray(pointVAO);
+		glDrawArrays(GL_POINTS, 0, drawedPoints.size());
+		glBindVertexArray(0);
+	}
+
+	void make_vertices() {
+		delete[] pointVertices;
+		pointVertices = new GLfloat[drawedPoints.size() * 5];
+		int counter = 0;
+		for (auto iter = drawedPoints.begin(); iter != drawedPoints.end(); ++iter, ++counter) {
+			Color pcolor = colors[*iter];
+			Point point = PIXELS_TO_NORMAL(*iter, shape.getViewPortChange());
+			pointVertices[5*counter] = point.x;
+			pointVertices[5*counter + 1] = point.y;
+			
+			pointVertices[5*counter + 2] = pcolor.red;
+			pointVertices[5*counter + 3] = pcolor.green;
+			pointVertices[5*counter + 4] = pcolor.blue;
+		}
+
+		glBindVertexArray(pointVAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, pointVBO); 
+		glBufferData(GL_ARRAY_BUFFER, drawedPoints.size() * 5 * sizeof(GLfloat), pointVertices, GL_DYNAMIC_DRAW);
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid*)(2*sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
+public:
+	Canvas(const Point& bottomLeft, int width, int height, Color canvasColor, Color drawColor = Color(1.0, 0.0, 0.0), int radius = 10):
+	shape(bottomLeft, width, height, canvasColor),
+	contur({-1.0, 1.0}, {1.0, -1.0}, canvasColor),
+	radius(radius),
+	drawColor(drawColor)
+	{
+		glGenVertexArrays(1, &pointVAO);
+		glGenBuffers(1, &pointVBO);
+	}
+
+	virtual void draw(const viewPortState& state, const Shaders& shaders) override {
+		shape.draw(state, shaders);
+		draw_objects(shaders);
+
+		windrewsViewPort(state);
+	}
+
+	virtual void callback(const WindowStat& status, const viewPortState& state) {
+		
+		keyAction keyAct = status.getKeyAction();
+		if (keyAct.key == GLFW_MOUSE_BUTTON_LEFT && keyAct.action == GLFW_RELEASE) {
+			wasPressed = false;
+		}
+		
+		if (!mouseInside(status, shape.getViewPortChange())) {
+			return;
+		}
+
+		if (keyAct.key == GLFW_MOUSE_BUTTON_LEFT && keyAct.action == GLFW_PRESS) {
+			wasPressed = true;
+		}
+
+		if (!wasPressed) {
+			return;
+		}
+		Point mousePos = status.getMousePos(shape.getViewPortChange());
+
+		switch(draw_mode) {
+			case STOP:
+				break;
+			case BRUSH:
+				brushDrawProcess(mousePos, shape.getViewPortChange());
+				break;
+			default:
+				std::cerr << "incorrect canvas draw mode" << std::endl;
+				throw;
+		}
+	}
+
+	virtual void move(const Point& moveVec, const viewPortState& state) {
+		shape.move(moveVec, state);
+	}
+
+	virtual bool changeViewPort() {
+		return false;
+	}
+
+	void setDrawMode(CANVAS_DRAW_MODES mode) {
+		draw_mode = mode;
+	}
+
+	CANVAS_DRAW_MODES getDrawMode() {
+		return draw_mode;
 	}
 };
 #endif

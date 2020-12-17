@@ -36,6 +36,15 @@ struct Point{
 	Point& operator=(const Point& other) = default;
 	Point& operator=(Point&&) = default;
 
+	bool operator<(const Point& other) const {
+		if (x == other.x) {
+			return y < other.y;
+		}
+		else {
+			return x < other.x;
+		}
+	}
+
 	Point(double x, double y): x(x), y(y) {
 	}	
 
@@ -77,6 +86,14 @@ struct viewPortState {
 	height(height)
 	{}
 };
+
+Point NORMAL_TO_PIXELS(const Point& other, const viewPortState& state) {
+	return Point(int((other.x + 1) * double(state.width) / double(2)), int((other.y + 1) * double(state.height) / double(2)));
+}
+
+Point PIXELS_TO_NORMAL(const Point& other, const viewPortState& state) {
+	return Point((double(2 * other.x) / double(state.width)) - 1, (double(2 * other.y) / double(state.height)) - 1);
+}
 
 void windrewsViewPort(const viewPortState& state) {
 	glViewport(state.x, state.y, state.width, state.height);

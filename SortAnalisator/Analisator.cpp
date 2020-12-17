@@ -8,6 +8,12 @@
 #include "AnalisatorConstants.h"
 #include "MeasureTools.hpp"
 
+const Point tr[] = {
+	{1.0, 1.0},
+	{0.0, 0.0},
+	{1.0, 0.5}	
+};
+
 void main_loop(Windrew* window) {
 	while (!window->shouldClose()) {
 		window->draw();
@@ -41,6 +47,8 @@ int main(int argc, char** argv) {
 	right_octangle = window->make_underwindow (new Octangle (AnConst::RIGHT_COMP_OCTANGLE, {1.0, 1.0, 1.0}), nullptr);
 	window->make_underwindow (new Arrow (AnConst::RIGHT_VERTICAL_ARROW, {0.0, 0.0, 0.0}), right_octangle);
 	window->make_underwindow (new Arrow (AnConst::RIGHT_HORIZONTAL_ARROW, {0.0, 0.0, 0.0}), right_octangle);
+
+	// window->make_underwindow(new Polygon<3>(tr, {0.5, 0.4, 0.7}), nullptr);
 
 	// window->make_underwindow (new Graphic<int, AnConst::MEASURE_NUM, AnConst::MEASURE_FREQ, AnConst::MAX_COPY_QUANTITY> 
 	// (AnConst::LEFT_VERTICAL_ARROW[1], AnConst::LEFT_HORIZONTAL_ARROW[1], colors::BUBBLESORT, TestRes::BUBBLESORT_COPIES),
