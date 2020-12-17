@@ -40,13 +40,13 @@ int main(int argc, char** argv) {
 	WindowNode* left_octangle = nullptr;
 	WindowNode* right_octangle = nullptr;
 
-	left_octangle = window->make_underwindow (new Picture (AnConst::LEFT_COPY_OCTANGLE, "textures/texture.jpg"), nullptr);
-	window->make_underwindow (new Arrow (AnConst::LEFT_VERTICAL_ARROW, {0.0, 0.0, 0.0}), left_octangle);
-	window->make_underwindow (new Arrow (AnConst::LEFT_HORIZONTAL_ARROW, {0.0, 0.0, 0.0}), left_octangle);
+	left_octangle = window->make_underwindow<Picture> (nullptr, AnConst::LEFT_COPY_OCTANGLE, "textures/texture.jpg");
+	window->make_underwindow<Arrow> (left_octangle, AnConst::LEFT_VERTICAL_ARROW, Color(0.0, 0.0, 0.0));
+	window->make_underwindow<Arrow> (left_octangle, AnConst::LEFT_HORIZONTAL_ARROW, Color(0.0, 0.0, 0.0));
 
-	right_octangle = window->make_underwindow (new Octangle (AnConst::RIGHT_COMP_OCTANGLE, {1.0, 1.0, 1.0}), nullptr);
-	window->make_underwindow (new Arrow (AnConst::RIGHT_VERTICAL_ARROW, {0.0, 0.0, 0.0}), right_octangle);
-	window->make_underwindow (new Arrow (AnConst::RIGHT_HORIZONTAL_ARROW, {0.0, 0.0, 0.0}), right_octangle);
+	right_octangle = window->make_underwindow<Octangle> (nullptr, AnConst::RIGHT_COMP_OCTANGLE, Color(1.0, 1.0, 1.0));
+	window->make_underwindow<Arrow> (right_octangle, AnConst::RIGHT_VERTICAL_ARROW, Color(0.0, 0.0, 0.0));
+	window->make_underwindow<Arrow> (right_octangle, AnConst::RIGHT_HORIZONTAL_ARROW, Color(0.0, 0.0, 0.0));
 
 	// window->make_underwindow(new Polygon<3>(tr, {0.5, 0.4, 0.7}), nullptr);
 
@@ -66,32 +66,42 @@ int main(int argc, char** argv) {
 	// (AnConst::RIGHT_VERTICAL_ARROW[1], AnConst::RIGHT_HORIZONTAL_ARROW[1], colors::QUICKSORT, TestRes::QUICKSORT_COMPS),
 	// right_octangle);
 
-	window->make_underwindow (
-		new PrimitiveButton(colors::QUICKSORT, 
-		           colors::QUICKSORT_PICKED, 
-				   colors::QUICKSORT_ACTIVE, 
-				   AnConst::QUICKSORT_BUTTON_COORDS,
-				   test_qsort),
-		nullptr);
+	window->make_underwindow<PrimitiveButton> (
+		nullptr,
+			colors::QUICKSORT, 
+		    colors::QUICKSORT_PICKED, 
+		    colors::QUICKSORT_ACTIVE, 
+		    AnConst::QUICKSORT_BUTTON_COORDS,
+			test_qsort
+		);
 
-	window->make_underwindow (
-		new PrimitiveButton(colors::BUBBLESORT, 
-		           colors::BUBBLESORT_PICKED, 
-				   colors::BUBBLESORT_ACTIVE, 
-				   AnConst::BUBBLESORT_BUTTON_COORDS,
-				   test_bsort),
-		nullptr);
+	window->make_underwindow<PrimitiveButton> (
+		nullptr,
+			colors::BUBBLESORT, 
+		    colors::BUBBLESORT_PICKED, 
+			colors::BUBBLESORT_ACTIVE, 
+			AnConst::BUBBLESORT_BUTTON_COORDS,
+			test_bsort
+		);
 
-	window->make_underwindow (
-		 new KeyButton(GLFW_KEY_Q, test_qsort),
-		nullptr);
+	window->make_underwindow<KeyButton> (
+		nullptr,
+			GLFW_KEY_Q, 
+			test_qsort
+		);
 
-	window->make_underwindow (
-		 new KeyButton(GLFW_KEY_B, test_bsort),
-		nullptr);
+	window->make_underwindow<KeyButton> (
+		nullptr,
+			GLFW_KEY_B, 
+			test_bsort
+		);
 
-	window->make_underwindow(new KeyButton(GLFW_KEY_DOWN, [window](){window->move({0.0, 0.2});}), nullptr);
-    window->make_underwindow(new KeyButton(GLFW_KEY_UP, [window](){window->move({0.0, -0.2});}), nullptr);
+	window->make_underwindow<KeyButton>(
+		nullptr,
+			GLFW_KEY_DOWN, [window](){window->move({0.0, 0.2});});
+    window->make_underwindow<KeyButton>(
+		nullptr,
+			GLFW_KEY_UP, [window](){window->move({0.0, -0.2});});
 
 
 	main_loop(window);
